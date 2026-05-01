@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\\\Users\\\\Asus\\\\Desktop\\\\Tma platform\\\\src\\\\components\" \"c:\\\\Users\\\\Asus\\\\Desktop\\\\Tma platform\\\\src\\\\pages\")",
+      "WebFetch(domain:docs.google.com)",
+      "PowerShell(npm run build 2>&1)"
+    ]
+  }
+}
