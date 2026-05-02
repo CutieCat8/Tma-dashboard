@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import {
-  Send, RotateCcw, Search, Users, User, Check,
+  Send, RotateCcw, Save, X, Search, Users, User, Check,
 } from "lucide-react";
 
 export const EMPTY_MEETING = {
@@ -21,6 +21,8 @@ export default function MeetingComposer({
   students = [],
   error,
   flash,
+  isEditing = false,
+  onCancelEdit,
 }) {
   const [search, setSearch] = useState("");
 
@@ -51,13 +53,29 @@ export default function MeetingComposer({
   };
 
   return (
-    <section className="t-card meet-composer">
+    <section className={`t-card meet-composer ${isEditing ? "is-editing" : ""}`}>
       <header className="ann-composer-head">
-        <h3 className="t-card-title">นัดประชุมใหม่</h3>
+        <h3 className="t-card-title">
+          {isEditing ? "แก้ไขนัดหมาย" : "นัดประชุมใหม่"}
+        </h3>
         <p className="t-card-sub">
-          เลือก <strong>วันและเวลา</strong> + ผู้เข้าร่วม นัด 1:1 หรือทั้งห้องก็ได้
+          {isEditing
+            ? "กำลังแก้ไขนัดที่สร้างไว้แล้ว · กดบันทึกเพื่ออัพเดต"
+            : <>เลือก <strong>วันและเวลา</strong> + ผู้เข้าร่วม นัด 1:1 หรือทั้งห้องก็ได้</>}
         </p>
       </header>
+
+      {isEditing && (
+        <div className="composer-edit-banner">
+          <span>โหมดแก้ไข — นักเรียนที่ถูกนัดจะเห็นค่าที่อัพเดตทันที</span>
+          {onCancelEdit && (
+            <button type="button" onClick={onCancelEdit}>
+              <X size={12} style={{ marginRight: 4, verticalAlign: "middle" }} />
+              ยกเลิกการแก้ไข
+            </button>
+          )}
+        </div>
+      )}
 
       <form className="ann-form" onSubmit={submit}>
         <div className="ann-form-row">
@@ -200,11 +218,11 @@ export default function MeetingComposer({
         <div className="ann-form-actions">
           <button type="button" className="t-btn-ghost" onClick={onReset}>
             <RotateCcw size={15} />
-            <span>ล้างฟอร์ม</span>
+            <span>{isEditing ? "รีเซ็ตค่า" : "ล้างฟอร์ม"}</span>
           </button>
           <button type="submit" className="t-btn-primary ann-submit-btn">
-            <Send size={15} />
-            <span>สร้างนัด</span>
+            {isEditing ? <Save size={15} /> : <Send size={15} />}
+            <span>{isEditing ? "บันทึกการแก้ไข" : "สร้างนัด"}</span>
           </button>
         </div>
       </form>

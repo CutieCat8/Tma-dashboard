@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import {
   ChevronLeft, ChevronRight, MapPin, Clock, Users, User,
-  Trash2, CalendarPlus,
+  Trash2, CalendarPlus, Pencil,
 } from "lucide-react";
 import { useApp } from "../AppContext";
 import { useTeacher } from "../context/TeacherContext";
@@ -47,7 +47,7 @@ function generateDays(year, month) {
 }
 
 export default function TeacherSchedulePage() {
-  const { data, addMeeting, removeMeeting, getMeetingsForDate } = useApp();
+  const { data, addMeeting, removeMeeting, updateMeeting, getMeetingsForDate } = useApp();
   const { students } = useTeacher();
 
   const tStr = todayISO();
@@ -55,6 +55,8 @@ export default function TeacherSchedulePage() {
   const [calMonth, setCalMonth] = useState({ year: tNow.getFullYear(), month: tNow.getMonth() });
   const [picked, setPicked] = useState(tStr);
   const [form, setForm] = useState({ ...EMPTY_MEETING, date: tStr });
+  const [editingId, setEditingId] = useState(null);
+  const [originalForm, setOriginalForm] = useState(null);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -84,9 +86,41 @@ export default function TeacherSchedulePage() {
   };
 
   const resetForm = () => {
+    if (editingId && originalForm) {
+      setForm(originalForm);
+    } else {
+      setForm({ ...EMPTY_MEETING, date: picked || tStr });
+    }
+    setError("");
+    setFlash("");
+  };
+
+  const onCancelEdit = () => {
+    setEditingId(null);
+    setOriginalForm(null);
     setForm({ ...EMPTY_MEETING, date: picked || tStr });
     setError("");
     setFlash("");
+  };
+
+  const onEditMeeting = (m) => {
+    const next = {
+      title: m.title || "",
+      description: m.description || "",
+      date: m.date || "",
+      time: m.time || "",
+      location: m.location || "",
+      attendeeMode: m.attendeeMode === "students" ? "students" : "all",
+      studentIds: Array.isArray(m.studentIds) ? [...m.studentIds] : [],
+    };
+    setForm(next);
+    setOriginalForm(next);
+    setEditingId(m.id);
+    setError("");
+    setFlash("");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    const el = document.getElementById("meet-title");
+    if (el) el.focus();
   };
 
   const onSubmit = () => {
@@ -95,10 +129,19 @@ export default function TeacherSchedulePage() {
     if (form.attendeeMode === "students" && form.studentIds.length === 0) {
       return setError("กรุณาเลือกนักเรียนอย่างน้อย 1 คน หรือเปลี่ยนเป็นทั้งห้อง");
     }
-    addMeeting(form);
-    setPicked(form.date);
-    setForm({ ...EMPTY_MEETING, date: form.date });
-    setFlash("สร้างนัดหมายเรียบร้อย");
+    if (editingId) {
+      updateMeeting(editingId, form);
+      setPicked(form.date);
+      setEditingId(null);
+      setOriginalForm(null);
+      setForm({ ...EMPTY_MEETING, date: form.date });
+      setFlash("บันทึกการแก้ไขนัดหมายเรียบร้อย");
+    } else {
+      addMeeting(form);
+      setPicked(form.date);
+      setForm({ ...EMPTY_MEETING, date: form.date });
+      setFlash("สร้างนัดหมายเรียบร้อย");
+    }
     setTimeout(() => setFlash(""), 3500);
   };
 
@@ -194,6 +237,8 @@ export default function TeacherSchedulePage() {
               students={students}
               error={error}
               flash={flash}
+              isEditing={!!editingId}
+              onCancelEdit={onCancelEdit}
             />
           </div>
 
@@ -237,14 +282,24 @@ export default function TeacherSchedulePage() {
                     <li key={m.id} className="meet-item">
                       <div className="meet-item-head">
                         <h4 className="meet-item-title">{m.title}</h4>
-                        <button
-                          type="button"
-                          className="meet-item-del"
-                          aria-label="ลบนัด"
-                          onClick={() => setConfirmDelete(m)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div style={{ display: "inline-flex", gap: 4 }}>
+                          <button
+                            type="button"
+                            className="meet-item-edit"
+                            aria-label="แก้ไขนัด"
+                            onClick={() => onEditMeeting(m)}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="meet-item-del"
+                            aria-label="ลบนัด"
+                            onClick={() => setConfirmDelete(m)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                       <ul className="meet-item-meta">
                         {m.time && (

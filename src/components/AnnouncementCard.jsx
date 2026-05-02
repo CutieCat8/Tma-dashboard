@@ -71,6 +71,7 @@ export default function AnnouncementCard({
   announcement,
   onOpen,
   onDelete,
+  onEdit,
   className = "",
 }) {
   const a = announcement;
@@ -133,16 +134,28 @@ export default function AnnouncementCard({
           <ExternalLink size={15} />
           <span>ดูรายละเอียด</span>
         </button>
-        {onDelete && (
-          <button
-            type="button"
-            className="ann-delete"
-            onClick={() => onDelete(a)}
-            aria-label="ลบประกาศ"
-          >
-            ลบ
-          </button>
-        )}
+        <div style={{ display: "inline-flex", alignItems: "center" }}>
+          {onEdit && (
+            <button
+              type="button"
+              className="ann-edit"
+              onClick={() => onEdit(a)}
+              aria-label="แก้ไขประกาศ"
+            >
+              แก้ไข
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              className="ann-delete"
+              onClick={() => onDelete(a)}
+              aria-label="ลบประกาศ"
+            >
+              ลบ
+            </button>
+          )}
+        </div>
       </footer>
     </article>
   );

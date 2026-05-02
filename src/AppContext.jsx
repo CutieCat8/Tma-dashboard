@@ -234,6 +234,28 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
+  const updateAnnouncement = useCallback((id, payload) => {
+    setData((prev) => ({
+      ...prev,
+      announcements: prev.announcements.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              title: payload.title?.trim() || a.title,
+              description: payload.description?.trim() ?? a.description,
+              category: payload.category || a.category,
+              dateStart: payload.dateStart ?? a.dateStart,
+              dateEnd: payload.dateEnd ?? a.dateEnd,
+              time: payload.time?.trim() ?? a.time,
+              location: payload.location?.trim() ?? a.location,
+              attendees: payload.attendees?.trim() ?? a.attendees,
+              updatedAt: new Date().toISOString(),
+            }
+          : a
+      ),
+    }));
+  }, []);
+
   const markAnnouncementRead = useCallback((id) => {
     setData((prev) => ({
       ...prev,
@@ -265,6 +287,27 @@ export function AppProvider({ children }) {
     setData((prev) => ({
       ...prev,
       meetings: prev.meetings.filter((m) => m.id !== id),
+    }));
+  }, []);
+
+  const updateMeeting = useCallback((id, payload) => {
+    setData((prev) => ({
+      ...prev,
+      meetings: prev.meetings.map((m) =>
+        m.id === id
+          ? {
+              ...m,
+              date: payload.date || m.date,
+              time: payload.time?.trim() ?? m.time,
+              title: payload.title?.trim() || m.title,
+              location: payload.location?.trim() ?? m.location,
+              description: payload.description?.trim() ?? m.description,
+              attendeeMode: payload.attendeeMode === "students" ? "students" : "all",
+              studentIds: Array.isArray(payload.studentIds) ? [...payload.studentIds] : m.studentIds,
+              updatedAt: new Date().toISOString(),
+            }
+          : m
+      ),
     }));
   }, []);
 
@@ -305,8 +348,8 @@ export function AppProvider({ children }) {
         selectedDate, setSelectedDate,
         calendarMonth, setCalendarMonth,
         toggleTodo,
-        addAnnouncement, removeAnnouncement, markAnnouncementRead,
-        addMeeting, removeMeeting, getMeetingsForDate, getMeetingsForStudent,
+        addAnnouncement, removeAnnouncement, updateAnnouncement, markAnnouncementRead,
+        addMeeting, removeMeeting, updateMeeting, getMeetingsForDate, getMeetingsForStudent,
         stats,
         studentId, setStudentId,
         role, setRole,

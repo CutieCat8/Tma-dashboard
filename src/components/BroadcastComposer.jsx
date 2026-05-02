@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  Send, RotateCcw,
+  Send, RotateCcw, Save, X,
   Megaphone, FileText, Video, Sparkles, Info,
 } from "lucide-react";
 import { ANNOUNCEMENT_CATEGORIES } from "./AnnouncementCard";
@@ -39,6 +39,8 @@ export default function BroadcastComposer({
   onReset,
   error,
   flash,
+  isEditing = false,
+  onCancelEdit,
 }) {
   const update = (field, value) => onChange({ ...form, [field]: value });
 
@@ -48,13 +50,29 @@ export default function BroadcastComposer({
   };
 
   return (
-    <section className="t-card ann-composer">
+    <section className={`t-card ann-composer ${isEditing ? "is-editing" : ""}`}>
       <header className="ann-composer-head">
-        <h3 className="t-card-title">สร้างประกาศใหม่</h3>
+        <h3 className="t-card-title">
+          {isEditing ? "แก้ไขประกาศ" : "สร้างประกาศใหม่"}
+        </h3>
         <p className="t-card-sub">
-          กรอกอย่างน้อย <strong>หัวข้อ</strong> — ช่องอื่นจะใส่หรือไม่ใส่ก็ได้
+          {isEditing
+            ? "กำลังแก้ไขประกาศที่โพสต์ไปแล้ว · กดบันทึกเพื่ออัพเดต"
+            : <>กรอกอย่างน้อย <strong>หัวข้อ</strong> — ช่องอื่นจะใส่หรือไม่ใส่ก็ได้</>}
         </p>
       </header>
+
+      {isEditing && (
+        <div className="composer-edit-banner">
+          <span>โหมดแก้ไข — การเปลี่ยนแปลงจะแทนที่ประกาศเดิม</span>
+          {onCancelEdit && (
+            <button type="button" onClick={onCancelEdit}>
+              <X size={12} style={{ marginRight: 4, verticalAlign: "middle" }} />
+              ยกเลิกการแก้ไข
+            </button>
+          )}
+        </div>
+      )}
 
       <form className="ann-form" onSubmit={submit}>
         <div className="ann-form-row">
@@ -176,11 +194,11 @@ export default function BroadcastComposer({
         <div className="ann-form-actions">
           <button type="button" className="t-btn-ghost" onClick={onReset}>
             <RotateCcw size={15} />
-            <span>ล้างฟอร์ม</span>
+            <span>{isEditing ? "รีเซ็ตค่า" : "ล้างฟอร์ม"}</span>
           </button>
           <button type="submit" className="t-btn-primary ann-submit-btn">
-            <Send size={15} />
-            <span>ประกาศ</span>
+            {isEditing ? <Save size={15} /> : <Send size={15} />}
+            <span>{isEditing ? "บันทึกการแก้ไข" : "ประกาศ"}</span>
           </button>
         </div>
       </form>

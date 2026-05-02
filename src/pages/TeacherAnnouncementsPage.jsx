@@ -28,8 +28,10 @@ function buildPreview(form) {
 }
 
 export default function TeacherAnnouncementsPage() {
-  const { data, addAnnouncement, removeAnnouncement } = useApp();
+  const { data, addAnnouncement, removeAnnouncement, updateAnnouncement } = useApp();
   const [form, setForm] = useState(EMPTY_ANNOUNCEMENT);
+  const [editingId, setEditingId] = useState(null);
+  const [originalForm, setOriginalForm] = useState(null);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const [filter, setFilter] = useState("ทั้งหมด");
@@ -41,9 +43,40 @@ export default function TeacherAnnouncementsPage() {
   };
 
   const onReset = () => {
+    if (editingId && originalForm) {
+      setForm(originalForm);
+    } else {
+      setForm(EMPTY_ANNOUNCEMENT);
+    }
+    setError("");
+    setFlash("");
+  };
+
+  const onCancelEdit = () => {
+    setEditingId(null);
+    setOriginalForm(null);
     setForm(EMPTY_ANNOUNCEMENT);
     setError("");
     setFlash("");
+  };
+
+  const onEdit = (a) => {
+    const next = {
+      title: a.title || "",
+      description: a.description || "",
+      category: a.category || "ประกาศ",
+      dateStart: a.dateStart || "",
+      dateEnd: a.dateEnd || "",
+      time: a.time || "",
+      location: a.location || "",
+      attendees: a.attendees || "",
+    };
+    setForm(next);
+    setOriginalForm(next);
+    setEditingId(a.id);
+    setError("");
+    setFlash("");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const onSubmit = () => {
@@ -55,10 +88,19 @@ export default function TeacherAnnouncementsPage() {
       setError("วันสิ้นสุดต้องไม่ก่อนวันเริ่ม");
       return;
     }
-    addAnnouncement(form);
-    setForm(EMPTY_ANNOUNCEMENT);
-    setError("");
-    setFlash("ประกาศเรียบร้อย — นักเรียนเห็นในหน้าฟีดทันที");
+    if (editingId) {
+      updateAnnouncement(editingId, form);
+      setEditingId(null);
+      setOriginalForm(null);
+      setForm(EMPTY_ANNOUNCEMENT);
+      setError("");
+      setFlash("บันทึกการแก้ไขเรียบร้อย");
+    } else {
+      addAnnouncement(form);
+      setForm(EMPTY_ANNOUNCEMENT);
+      setError("");
+      setFlash("ประกาศเรียบร้อย — นักเรียนเห็นในหน้าฟีดทันที");
+    }
     setTimeout(() => setFlash(""), 3500);
   };
 
@@ -88,6 +130,8 @@ export default function TeacherAnnouncementsPage() {
             onReset={onReset}
             error={error}
             flash={flash}
+            isEditing={!!editingId}
+            onCancelEdit={onCancelEdit}
           />
 
           <aside className="ann-preview-pane">
@@ -138,6 +182,8 @@ export default function TeacherAnnouncementsPage() {
                   key={a.id}
                   announcement={a}
                   onDelete={(x) => setConfirmDelete(x)}
+                  onEdit={onEdit}
+                  className={editingId === a.id ? "is-editing-target" : ""}
                 />
               ))}
             </div>

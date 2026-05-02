@@ -2,12 +2,13 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { useApp } from "../AppContext";
 import {
-  Home, Megaphone, CheckSquare, BarChart3,
+  Home, Megaphone, CheckSquare, BarChart3, CalendarDays,
   Settings, HelpCircle, LogOut,
 } from "lucide-react";
 
 const NAV = [
   { name: "Home", icon: Home, to: "/student", end: true },
+  { name: "Schedule", icon: CalendarDays, to: "/student/schedule" },
   { name: "Announcements", icon: Megaphone, to: "/student/announcements" },
   { name: "Tasks", icon: CheckSquare, to: "/student/tasks" },
   { name: "Analitics", icon: BarChart3, to: "/student/analytics" },

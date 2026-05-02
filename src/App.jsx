@@ -12,6 +12,8 @@ import TeacherHomePage from "./pages/TeacherHomePage";
 import TeacherAnnouncementsPage from "./pages/TeacherAnnouncementsPage";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage";
 import StudentAnnouncementsPage from "./pages/StudentAnnouncementsPage";
+import StudentSchedulePage from "./pages/StudentSchedulePage";
+import TeacherRosterPage from "./pages/TeacherRosterPage";
 
 function StudentShell() {
   const { studentId, role } = useApp();
@@ -56,12 +58,15 @@ export default function App() {
           <Route path="tasks" element={<TasksPage />} />
           <Route path="analytics" element={<ConsistencyPage />} />
           <Route path="announcements" element={<StudentAnnouncementsPage />} />
+          <Route path="schedule" element={<StudentSchedulePage />} />
         </Route>
 
         <Route path="/teacher" element={<TeacherShell />}>
           <Route index element={<TeacherHomePage />} />
           <Route path="announcements" element={<TeacherAnnouncementsPage />} />
           <Route path="schedule" element={<TeacherSchedulePage />} />
+          <Route path="roster" element={<TeacherRosterPage />} />
+          <Route path="roster/:id" element={<TeacherRosterPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

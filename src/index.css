@@ -3228,3 +3228,553 @@ select.t-input { appearance: none; cursor: pointer; }
   .meet-search { flex: 1; }
   .meet-picker-head { flex-direction: column; align-items: stretch; }
 }
+
+/* =========================================================
+   Student Schedule page (/student/schedule)
+   ========================================================= */
+.sched-page .main-content {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.sched-next-card {
+  position: relative;
+  margin: 18px 0 22px;
+  padding: 22px 26px 24px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #111827 0%, #1f2937 60%, #312e81 100%);
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.18);
+}
+.sched-next-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+.sched-next-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+.sched-next-meta {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 14px;
+}
+.sched-next-meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.92;
+}
+.sched-next-badge {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+.sched-next-badge.tone-live { background: #34d399; color: #052e1c; }
+.sched-next-badge.tone-soon { background: #fbbf24; color: #4a2a06; }
+
+.sched-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 12px 0 18px;
+}
+.sched-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #fff;
+  min-width: 220px;
+}
+.sched-search input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 13px;
+  flex: 1;
+  font-family: inherit;
+}
+.sched-search button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 2px;
+  display: inline-flex;
+}
+.sched-search button:hover { color: #111827; }
+
+.sched-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 20px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 18px;
+  color: #6b7280;
+  background: #fafafa;
+}
+.sched-empty p { margin: 0; font-size: 14px; }
+
+.sched-list { display: flex; flex-direction: column; gap: 18px; }
+
+.sched-day {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.sched-day-head {
+  display: contents;
+}
+.sched-day-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #f9fafb;
+  padding: 10px 6px;
+  min-height: 78px;
+}
+.sched-day-num {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: #111827;
+}
+.sched-day-mon {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+.sched-day-wd {
+  font-size: 10px;
+  color: #9ca3af;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+.sched-day-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 0 6px;
+  color: #111827;
+}
+.sched-day-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+.sched-day-badge.tone-live { background: #ecfdf5; color: #065f46; }
+.sched-day-badge.tone-soon { background: #fff7ed; color: #9a3412; }
+.sched-day-badge.tone-future { background: #eff6ff; color: #1e40af; }
+.sched-day-badge.tone-ended { background: #f3f4f6; color: #6b7280; }
+
+.sched-day-items {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sched-item {
+  display: grid;
+  grid-template-columns: 4px 1fr;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fafafa;
+  border: 1px solid #eef0f3;
+}
+.sched-item-bar {
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 999px;
+}
+.sched-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.sched-item-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+.sched-item-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.sched-item-tag.tone-all { background: #eef2ff; color: #4338ca; }
+.sched-item-tag.tone-private { background: #fdf4ff; color: #86198f; }
+
+.sched-item-meta {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12.5px;
+  color: #6b7280;
+}
+.sched-item-meta li { display: inline-flex; align-items: center; gap: 5px; }
+.sched-item-desc {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 4px 0 0;
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .sched-next-badge { position: static; display: inline-block; margin-top: 10px; }
+  .sched-day { grid-template-columns: 64px 1fr; }
+  .sched-day-date { min-height: 64px; }
+  .sched-day-num { font-size: 22px; }
+}
+
+/* =========================================================
+   Teacher Roster page (/teacher/roster)
+   ========================================================= */
+.roster-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 22px;
+  align-items: flex-start;
+}
+.roster-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.roster-search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 13.5px;
+  font-family: inherit;
+}
+.roster-list-card { padding: 12px; }
+.roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.roster-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.roster-row:hover { background: #f9fafb; }
+.roster-row.on {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+.roster-row-seat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.roster-row.on .roster-row-seat {
+  background: #fff;
+  color: #4338ca;
+}
+.roster-row-info { min-width: 0; }
+.roster-row-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.roster-row-id {
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+.roster-row-status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.roster-row-status.on-time { background: #10b981; }
+.roster-row-status.late    { background: #f59e0b; }
+.roster-row-status.missing { background: #ef4444; }
+
+.roster-detail-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.roster-hero {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #111827, #312e81);
+  color: #fff;
+  margin-bottom: 16px;
+}
+.roster-hero-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 22px;
+}
+.roster-hero-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.roster-hero-id {
+  font-size: 13px;
+  opacity: 0.78;
+  margin: 0;
+}
+.roster-hero-status {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.16);
+}
+.roster-hero-status.on-time { background: #10b981; color: #03281b; }
+.roster-hero-status.late { background: #f59e0b; color: #3f2606; }
+.roster-hero-status.missing { background: #ef4444; color: #3a0a0a; }
+
+.roster-stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.roster-stat {
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+}
+.roster-stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.roster-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 4px;
+}
+.roster-stat-sub {
+  font-size: 11.5px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.roster-section { margin-top: 16px; }
+.roster-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.roster-section h3 .count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.roster-checks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.roster-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #eef0f3;
+  background: #fafafa;
+  font-size: 13px;
+}
+.roster-check.done { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.roster-check.miss { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+
+.roster-meeting-list,
+.roster-ann-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.roster-meeting,
+.roster-ann {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fafafa;
+  border: 1px solid #eef0f3;
+  font-size: 13px;
+}
+.roster-meeting-title,
+.roster-ann-title {
+  font-weight: 600;
+  color: #111827;
+}
+.roster-meeting-meta,
+.roster-ann-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+@media (max-width: 1080px) {
+  .roster-grid { grid-template-columns: 1fr; }
+  .roster-list { max-height: 320px; }
+  .roster-stat-row { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .roster-checks { grid-template-columns: 1fr; }
+  .roster-stat-row { grid-template-columns: 1fr; }
+}
+
+/* =========================================================
+   Edit affordances on existing cards
+   ========================================================= */
+.ann-edit {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  margin-right: 6px;
+}
+.ann-edit:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+.meet-item-edit {
+  background: transparent;
+  border: 0;
+  color: #6366f1;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: inline-flex;
+}
+.meet-item-edit:hover { background: #eef2ff; }
+
+.ann-composer.is-editing,
+.meet-composer.is-editing {
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.composer-edit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eef2ff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #3730a3;
+  font-weight: 600;
+}
+.composer-edit-banner button {
+  background: transparent;
+  border: 0;
+  color: #4338ca;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
