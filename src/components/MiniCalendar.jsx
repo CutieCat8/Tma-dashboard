@@ -33,7 +33,10 @@ const MONTHS_EN = [
 ];
 
 export default function MiniCalendar() {
-  const { data, selectedDate, setSelectedDate, calendarMonth, setCalendarMonth } = useApp();
+  const {
+    selectedDate, setSelectedDate, calendarMonth, setCalendarMonth,
+    studentId, getMeetingsForDate,
+  } = useApp();
   const { year, month } = calendarMonth;
   const days = generateDays(year, month);
   const today = new Date();
@@ -77,7 +80,8 @@ export default function MiniCalendar() {
           const dateStr = cell.otherMonth
             ? null
             : `${year}-${String(month + 1).padStart(2, "0")}-${String(cell.day).padStart(2, "0")}`;
-          const hasMeeting = dateStr && data.meetings[dateStr];
+          const hasMeeting =
+            dateStr && getMeetingsForDate(dateStr, studentId || null).length > 0;
           const isToday = dateStr === todayStr;
           const isSelected = dateStr === selectedDate;
 

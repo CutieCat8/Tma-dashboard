@@ -1,21 +1,23 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { useApp } from "../AppContext";
 import {
-  Home, Megaphone, CheckSquare, BarChart3,
-  Settings, HelpCircle, LogOut,
+  LayoutGrid, Users, CalendarDays, Megaphone,
+  MessageSquare, BarChart3, Settings, LogOut,
 } from "lucide-react";
+import { useApp } from "../AppContext";
 
 const NAV = [
-  { name: "Home", icon: Home, to: "/student", end: true },
-  { name: "Announcements", icon: Megaphone, to: "/student/announcements" },
-  { name: "Tasks", icon: CheckSquare, to: "/student/tasks" },
-  { name: "Analitics", icon: BarChart3, to: "/student/analytics" },
+  { name: "Overview", icon: LayoutGrid, to: "/teacher", end: true },
+  { name: "Roster", icon: Users, to: "/teacher/roster" },
+  { name: "Schedule", icon: CalendarDays, to: "/teacher/schedule" },
+  { name: "Announcements", icon: Megaphone, to: "/teacher/announcements" },
+  { name: "Chat", icon: MessageSquare, to: "/teacher/chat" },
+  { name: "Analytics", icon: BarChart3, to: "/teacher/analytics" },
+  { name: "Settings", icon: Settings, to: "/teacher/settings" },
 ];
 
-export default function Sidebar() {
+export default function TSidebar() {
   const { logout } = useApp();
-
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -46,10 +48,6 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-bottom">
-        <button className="sidebar-nav-item" type="button">
-          <HelpCircle size={20} />
-          <span>Support</span>
-        </button>
         <button className="sidebar-nav-item" type="button" onClick={logout}>
           <LogOut size={20} />
           <span>Log Out</span>

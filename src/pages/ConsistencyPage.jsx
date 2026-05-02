@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApp } from "../AppContext";
 import { ArrowLeft, Flame, CalendarCheck, TrendingUp, ExternalLink, RefreshCw } from "lucide-react";
 import lotusIcon from "../../icon/lotus.png";
@@ -29,7 +30,8 @@ function getLast30DateKeys() {
 }
 
 export default function ConsistencyPage() {
-  const { setCurrentPage, consistency, sheetsLoading, sheetsError, refreshSheets, studentId } = useApp();
+  const { consistency, sheetsLoading, sheetsError, refreshSheets, studentId } = useApp();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("meditation");
 
   const todayKey = dateKey(new Date());
@@ -102,7 +104,7 @@ export default function ConsistencyPage() {
   return (
     <div className="consistency-page fade-in">
       <div className="consistency-page-header">
-        <button className="back-btn" onClick={() => setCurrentPage("Home")}>
+        <button className="back-btn" onClick={() => navigate("/student")}>
           <ArrowLeft size={20} />
           <span>กลับ</span>
         </button>

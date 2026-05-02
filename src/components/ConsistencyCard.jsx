@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApp } from "../AppContext";
 import lotusIcon from "../../icon/lotus.png";
 import JournalIcon from "./JournalIcon";
@@ -14,10 +15,11 @@ function fmtDate(d) {
 }
 
 export default function ConsistencyCard() {
-  const { consistency, sheetsLoading, sheetsError, setCurrentPage } = useApp();
+  const { consistency, sheetsLoading, sheetsError } = useApp();
+  const navigate = useNavigate();
   const [hoverIdx, setHoverIdx] = useState(null);
 
-  const goAnalytics = () => setCurrentPage("Analitics");
+  const goAnalytics = () => navigate("/student/analytics");
 
   if (sheetsError) {
     return (

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApp } from "../AppContext";
 import { Check, Globe, BookOpen, FileText, Megaphone } from "lucide-react";
 
@@ -15,7 +16,8 @@ const COLORS = {
 };
 
 export default function TaskList() {
-  const { data, toggleTodo, setCurrentPage } = useApp();
+  const { data, toggleTodo } = useApp();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Forum");
 
   const tabs = ["Forum", "To-do"];
@@ -27,7 +29,7 @@ export default function TaskList() {
         <a
           className="see-all"
           href="#"
-          onClick={(e) => { e.preventDefault(); setCurrentPage("Tasks"); }}
+          onClick={(e) => { e.preventDefault(); navigate("/student/tasks"); }}
         >
           SEE ALL
         </a>
@@ -47,24 +49,36 @@ export default function TaskList() {
 
       {activeTab === "Forum" && (
         <div className="task-list">
-          {data.announcements.map((a) => (
-            <div key={a.id} className={`task-item ${a.read ? "read" : "unread"}`}>
-              <div className="task-icon task-orange">
-                <Megaphone size={20} />
-              </div>
-              <div className="task-info">
-                <div className="task-name">{a.title}</div>
-                <div className="task-meta">
-                  <span className="subject">955110</span>
-                  <span>•</span>
-                  <span>{a.date}</span>
+          {data.announcements.slice(0, 5).map((a) => {
+            const dateLabel = a.dateStart || a.date || "";
+            return (
+              <div
+                key={a.id}
+                className={`task-item ${a.read ? "read" : "unread"}`}
+                onClick={() => navigate("/student/announcements")}
+                role="button"
+              >
+                <div className="task-icon task-orange">
+                  <Megaphone size={20} />
+                </div>
+                <div className="task-info">
+                  <div className="task-name">{a.title}</div>
+                  <div className="task-meta">
+                    <span className="subject">{a.category || "955110"}</span>
+                    {dateLabel && (
+                      <>
+                        <span>•</span>
+                        <span>{dateLabel}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className={`read-badge ${a.read ? "is-read" : ""}`}>
+                  {a.read ? "อ่านแล้ว" : "ใหม่"}
                 </div>
               </div>
-              <div className={`read-badge ${a.read ? "is-read" : ""}`}>
-                {a.read ? "อ่านแล้ว" : "ใหม่"}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

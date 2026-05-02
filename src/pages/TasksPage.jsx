@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useApp } from "../AppContext";
 import { ArrowLeft, Check, FileText, BookOpen, Globe } from "lucide-react";
 
@@ -6,7 +7,8 @@ const ICONS = { Assignment: FileText, Reading: BookOpen, Daily: Globe };
 const COLORS = { Assignment: "task-blue", Reading: "task-green", Daily: "task-purple" };
 
 export default function TasksPage() {
-  const { data, toggleTodo, setCurrentPage } = useApp();
+  const { data, toggleTodo } = useApp();
+  const navigate = useNavigate();
 
   const doneTasks = data.todos.filter((t) => t.done);
   const pendingTasks = data.todos.filter((t) => !t.done);
@@ -14,7 +16,7 @@ export default function TasksPage() {
   return (
     <div className="tasks-page">
       <div className="tasks-page-header">
-        <button className="back-btn" onClick={() => setCurrentPage("Home")}>
+        <button className="back-btn" onClick={() => navigate("/student")}>
           <ArrowLeft size={20} />
           <span>กลับ</span>
         </button>
