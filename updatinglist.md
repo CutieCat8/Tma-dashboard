@@ -10,6 +10,105 @@ notable decisions made during the session.
 
 ---
 
+## Session 7 — 2026-05-03
+
+### Goal
+Close out the remaining Phase 1 cleanup before kicking off the Supabase
+migration. Three items: a dedicated student-side schedule page, edit support
+for both announcements and meetings, and a teacher roster page that drills
+into one student at a time.
+
+### What Shipped
+
+**Student schedule (`/student/schedule`)**
+- New page that lists every meeting the logged-in student is invited to
+  (filtered through `getMeetingsForStudent(studentId)` so each student sees
+  only their own 1:1s plus class-wide meetings).
+- Hero card at the top highlights the *next* meeting with relative-time
+  badge ("วันนี้" / "พรุ่งนี้" / "อีก N วัน").
+- Tab row: **กำลังจะมาถึง** / **ที่ผ่านมา** / **ทั้งหมด** with live counts
+  in the pill labels.
+- Search field filters across title, location, description.
+- Items grouped by date, each day showing a date chip + a relative-day
+  badge, then a vertical list of meeting items with a 1:1 vs ทั้งห้อง tag.
+- Sidebar now has a **Schedule** entry (CalendarDays icon) between Home and
+  Announcements.
+
+**Edit support for announcements & meetings**
+- Added `updateAnnouncement(id, payload)` and `updateMeeting(id, payload)`
+  to `AppContext`, both write `updatedAt` so the schema is forward-
+  compatible with future "edited" badges.
+- `BroadcastComposer` and `MeetingComposer` accept `isEditing` +
+  `onCancelEdit` props. In edit mode they:
+  - Swap the title/subtitle ("แก้ไขประกาศ" / "แก้ไขนัดหมาย").
+  - Show a banner with a "ยกเลิกการแก้ไข" link.
+  - Switch the submit button icon/label to **บันทึกการแก้ไข** (Save icon).
+  - Reset returns to the original loaded values (not empty), so the user
+    can undo in-progress edits without losing what was already on the
+    record.
+  - Get a soft indigo ring around the card so it's obvious you're editing.
+- `AnnouncementCard` got an optional `onEdit` prop — renders a "แก้ไข"
+  pill next to the existing delete button when supplied.
+- Teacher schedule meeting rows got a small pencil-icon edit button next
+  to the trash icon. Clicking it loads the meeting back into the composer
+  in edit mode and scrolls to the form (and focuses the title field).
+
+**Teacher roster (`/teacher/roster` + `/teacher/roster/:id`)**
+- Two-column layout: searchable list of all 40 students on the left,
+  full detail panel on the right.
+- List rows show seat number, name, ID, and a colored status dot
+  (on-time green / late amber / missing red).
+- Detail panel has:
+  - Hero card (gradient) with avatar (initials), name, ID, seat, and a
+    pill showing the student's current status.
+  - Three stat tiles: today's submission % (out of 3 forms), total
+    meetings (with upcoming/past split), and class todo progress.
+  - Section: status of today's three forms (Meditation / Daily Journal /
+    Assignment) as colored check rows.
+  - Section: list of all meetings involving this student (upcoming first,
+    then past), each tagged 1:1 or ทั้งห้อง.
+  - Section: recent announcements snapshot (top 5).
+- Routing: `/teacher/roster/:id` selects directly from the URL, so the
+  TSidebar Roster link lands on the empty-state, but clicking a row deep-
+  links to that student.
+
+### Files Added
+- `src/pages/StudentSchedulePage.jsx`
+- `src/pages/TeacherRosterPage.jsx`
+
+### Files Changed
+- `src/AppContext.jsx` — added `updateAnnouncement` + `updateMeeting`
+  actions and exposed them in the provider value.
+- `src/App.jsx` — registered `/student/schedule`, `/teacher/roster`, and
+  `/teacher/roster/:id` routes.
+- `src/components/Sidebar.jsx` — added the Schedule nav entry.
+- `src/components/BroadcastComposer.jsx` — `isEditing` + `onCancelEdit`
+  branch (banner, button labels, dynamic title/subtitle).
+- `src/components/MeetingComposer.jsx` — same edit-mode treatment.
+- `src/components/AnnouncementCard.jsx` — optional `onEdit` button.
+- `src/pages/TeacherAnnouncementsPage.jsx` — `editingId` + `originalForm`
+  state; submit dispatches `addAnnouncement` or `updateAnnouncement`
+  based on mode; passes `onEdit` to each card.
+- `src/pages/TeacherSchedulePage.jsx` — same edit state pattern; pencil
+  icon next to delete on each meeting row.
+- `src/index.css` — appended ~480 lines of styles:
+  - `.sched-*` (next card, toolbar/search, day groups, items, badges).
+  - `.roster-*` (grid, list rows, hero, stats, sections, checks).
+  - `.ann-edit`, `.meet-item-edit`, `.composer-edit-banner`,
+    `.is-editing` ring on composer cards.
+
+### Notes
+- `npm run build` passes cleanly. Bundle: 286 KB JS / 65 KB CSS
+  (gzip 86 / 12).
+- `data.meetings` and `data.announcements` schemas now include
+  `updatedAt` (optional). Old records without it still render fine.
+- Phase 1 cleanup is now **complete** — every roadmap item under
+  "Immediate next steps" is done. Next checkpoint: Phase 2 (Supabase).
+  This requires the user to create a Supabase project and provide the
+  project URL + anon key before code work can resume.
+
+---
+
 ## Session 6 — 2026-05-03
 
 ### Goal
@@ -389,6 +488,9 @@ experience, routing, announcements, scheduling, and documentation.
 
   ┌─────┬──────────────┬─────────────────────────────────────────────────────────────────────────┐
   │  #  │     Date     │                                  Topic                                  │
+  ├─────┼──────────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ 7   │ 2026-05-03   │ Phase 1 cleanup: /student/schedule, edit support for                    │
+  │     │              │ announcements + meetings, /teacher/roster deep-view                     │
   ├─────┼──────────────┼─────────────────────────────────────────────────────────────────────────┤
   │ 6   │ 2026-05-03   │ This file itself (the log)                                              │
   ├─────┼──────────────┼─────────────────────────────────────────────────────────────────────────┤

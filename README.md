@@ -36,6 +36,7 @@
 | หน้า | path | สิ่งที่ทำได้ |
 |---|---|---|
 | Home | `/student` | สรุปสถิติ, นัดหมายของวันนี้ / ที่เลือก, ปฏิทินเดือน, ฟอรัมประกาศ (ตัวอย่าง 5 รายการ), การ์ด consistency |
+| Schedule | `/student/schedule` | รายการนัดทั้งหมดของตัวเอง — แท็บ "กำลังจะมาถึง / ที่ผ่านมา / ทั้งหมด", ค้นหา, การ์ด "นัดถัดไป" ด้านบน, group ตามวัน + tag 1:1 vs ทั้งห้อง |
 | Announcements | `/student/announcements` | ดูประกาศทั้งหมดเป็นการ์ดกริด, กรองตามหมวด, คลิกดูรายละเอียดเต็มในโมดัล (auto mark as read) |
 | Tasks | `/student/tasks` | รายการ to-do ของวันนี้, แยกหมวด Assignment / Reading / Daily |
 | Analytics | `/student/analytics` | กราฟ meditation / journal — ดึงจาก Google Sheets ตามรหัสนักศึกษา, นับ streak, แสดง heatmap, embed ฟอร์มสองฟอร์ม |
@@ -45,8 +46,9 @@
 | หน้า | path | สิ่งที่ทำได้ |
 |---|---|---|
 | Overview | `/teacher` | 4 stat tiles (จำนวนนักเรียน / on-time today / pending forms / unread chats), Class Roster grid 40 คน พร้อม dot สถานะการส่ง 3 ฟอร์ม + filter All/On time/Late/Missing, คลิกการ์ดดูสถานะคนๆ เดียว |
-| Announcements | `/teacher/announcements` | ฟอร์มสร้างประกาศ + **live preview การ์ดด้านขวา**, หมวดหมู่เลือกด้วย pill cards (ประกาศ / ส่งงาน / ประชุม / กิจกรรม / อื่นๆ), กรอกแค่หัวข้อก็ประกาศได้, รายการประกาศที่โพสต์แล้วพร้อมตัวกรอง, ลบได้ |
-| Schedule | `/teacher/schedule` | ปฏิทินรายเดือนแสดงจำนวนนัดในแต่ละวัน, รายการนัดของวันที่เลือก, ฟอร์มสร้างนัดที่เลือกได้ระหว่าง **ทั้งห้อง 40 คน** หรือ **เฉพาะนักเรียน** (multi-select + ช่องค้นหาชื่อ / รหัส / ที่นั่ง), ลบนัดได้, รายการ "นัดที่กำลังจะมาถึง" |
+| Roster | `/teacher/roster` หรือ `/teacher/roster/:id` | รายชื่อนักเรียน 40 คนแบบ list view + ค้นหาชื่อ/รหัส/ที่นั่ง, คลิกดูหน้ารายละเอียดเชิงลึก: hero card, stat tile (% การส่ง / นัดทั้งหมด / งาน), สถานะ 3 ฟอร์มวันนี้, ประวัตินัดหมายของนักเรียนคนนั้น, ประกาศล่าสุด |
+| Announcements | `/teacher/announcements` | ฟอร์มสร้างประกาศ + **live preview การ์ดด้านขวา**, หมวดหมู่เลือกด้วย pill cards (ประกาศ / ส่งงาน / ประชุม / กิจกรรม / อื่นๆ), กรอกแค่หัวข้อก็ประกาศได้, รายการประกาศที่โพสต์แล้วพร้อมตัวกรอง, **แก้ไข / ลบ** ประกาศได้ |
+| Schedule | `/teacher/schedule` | ปฏิทินรายเดือนแสดงจำนวนนัดในแต่ละวัน, รายการนัดของวันที่เลือก, ฟอร์มสร้างนัดที่เลือกได้ระหว่าง **ทั้งห้อง 40 คน** หรือ **เฉพาะนักเรียน** (multi-select + ช่องค้นหาชื่อ / รหัส / ที่นั่ง), **แก้ไข / ลบ** นัดได้, รายการ "นัดที่กำลังจะมาถึง" |
 
 ### 2.3 ระบบ Login / Role
 
@@ -101,9 +103,10 @@ Tma-dashboard/
 │   │
 │   ├── AppContext.jsx           # Global state: data, auth, sheets, helpers
 │   │                            # actions: addAnnouncement, removeAnnouncement,
-│   │                            #          markAnnouncementRead, addMeeting,
-│   │                            #          removeMeeting, getMeetingsForDate,
-│   │                            #          getMeetingsForStudent, toggleTodo
+│   │                            #          updateAnnouncement, markAnnouncementRead,
+│   │                            #          addMeeting, removeMeeting, updateMeeting,
+│   │                            #          getMeetingsForDate, getMeetingsForStudent,
+│   │                            #          toggleTodo
 │   │
 │   ├── context/
 │   │   └── TeacherContext.jsx   # Teacher-only state: 40 mock students roster
@@ -130,9 +133,9 @@ Tma-dashboard/
 │   │   ├── StudentGrid.jsx      # 40-student roster grid + filter
 │   │   │
 │   │   │  # ↓ cross-role
-│   │   ├── AnnouncementCard.jsx # การ์ดประกาศ (export ANNOUNCEMENT_CATEGORIES, deriveStatus)
-│   │   ├── BroadcastComposer.jsx# ฟอร์มสร้างประกาศ (controlled component)
-│   │   └── MeetingComposer.jsx  # ฟอร์มสร้างนัด + multi-select students
+│   │   ├── AnnouncementCard.jsx # การ์ดประกาศ (export ANNOUNCEMENT_CATEGORIES, deriveStatus) + ปุ่มแก้ไข/ลบ
+│   │   ├── BroadcastComposer.jsx# ฟอร์มสร้าง/แก้ไขประกาศ (controlled, รองรับ isEditing)
+│   │   └── MeetingComposer.jsx  # ฟอร์มสร้าง/แก้ไขนัด + multi-select students (รองรับ isEditing)
 │   │
 │   └── pages/
 │       │  # ↓ student
@@ -140,10 +143,12 @@ Tma-dashboard/
 │       ├── TasksPage.jsx
 │       ├── ConsistencyPage.jsx
 │       ├── StudentAnnouncementsPage.jsx
+│       ├── StudentSchedulePage.jsx
 │       │  # ↓ teacher
 │       ├── TeacherHomePage.jsx
 │       ├── TeacherAnnouncementsPage.jsx
-│       └── TeacherSchedulePage.jsx
+│       ├── TeacherSchedulePage.jsx
+│       └── TeacherRosterPage.jsx
 │
 ├── index.html
 ├── package.json
@@ -285,9 +290,9 @@ token / pattern พื้นฐาน:
 - [x] Teacher Overview + StudentGrid 40 คน
 - [x] Announcement system + live preview composer
 - [x] Schedule system + per-student filtering
-- [ ] **Student Schedule page** (`/student/schedule`) — ตอนนี้นักเรียนเห็นนัดได้แค่ผ่านปฏิทิน home, อยากให้มีรายการเต็มๆ
-- [ ] **Edit announcement / meeting** — ตอนนี้แค่สร้าง / ลบ
-- [ ] **Roster page** (`/teacher/roster`) — ดูนักเรียนคนเดียวลึกๆ (timeline ส่งงาน, %, history)
+- [x] **Student Schedule page** (`/student/schedule`) — รายการนัดเต็มๆ พร้อม tab/ค้นหา + การ์ด "นัดถัดไป"
+- [x] **Edit announcement / meeting** — ทั้ง 2 ระบบรองรับ create / edit / delete แล้ว
+- [x] **Roster page** (`/teacher/roster`) — list view + รายละเอียดเชิงลึกต่อคน
 - [ ] **Chat 1:1** — รอ realtime backend
 
 ### Phase 2 — Backend จริง
