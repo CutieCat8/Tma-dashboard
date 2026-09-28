@@ -20,10 +20,12 @@ function formatToday() {
 
 export default function HomePage() {
   return (
-    <div className="main-wrapper">
+    <div className="main-wrapper student-dashboard">
       <main className="main-content">
-        <h1 className="page-title fade-in">955110</h1>
-        <p className="page-date fade-in">{formatToday()}</p>
+        <header className="dashboard-heading">
+          <h1 className="page-title fade-in">My Classes</h1>
+          <p className="page-date fade-in">{formatToday()}</p>
+        </header>
 
         <StatsRow />
         <MeetingCard />

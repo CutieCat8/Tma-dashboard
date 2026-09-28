@@ -43,7 +43,7 @@ export default function ConsistencyCard() {
   // Reserve horizontal padding so the end-of-line badge doesn't overflow.
   const VB_W = 200;
   const VB_H = 55;
-  const PAD_X = 16;
+  const PAD_X = 20;
   const X_RANGE = VB_W - PAD_X * 2;
   const Y_TOP = 8;
   const Y_BOTTOM = 48;
@@ -111,31 +111,30 @@ export default function ConsistencyCard() {
               />
             ))}
 
-            {/* Always-visible end pill showing current streak */}
-            <rect
-              x={last.x - 11}
-              y={last.y - 9}
-              width="22"
-              height="18"
-              rx="6"
-              fill="#111827"
-            />
-            <text
-              x={last.x}
-              y={last.y + 3}
-              textAnchor="middle"
-              fontSize="10"
-              fill="#fff"
-              fontWeight="700"
-            >
-              {last.streak}
-            </text>
-
-            {/* Hovered point highlight */}
-            {hoverIdx != null && hoverIdx !== points.length - 1 && (
-              <circle cx={points[hoverIdx].x} cy={points[hoverIdx].y} r="3" fill="#111827" />
-            )}
           </svg>
+
+          {/* HTML dot stays circular when the SVG chart stretches. */}
+          {hoverIdx != null && hoverIdx !== points.length - 1 && (
+            <span
+              className="chart-hover-dot"
+              style={{
+                left: `${(points[hoverIdx].x / VB_W) * 100}%`,
+                top: `${(points[hoverIdx].y / VB_H) * 100}%`,
+              }}
+            />
+          )}
+
+          <div
+            className="chart-end-marker"
+            style={{
+              left: `${(last.x / VB_W) * 100}%`,
+              top: `${(last.y / VB_H) * 100}%`,
+            }}
+            aria-label={`Current streak ${last.streak}`}
+          >
+            <span className="chart-end-value">{last.streak}</span>
+            <span className="chart-end-ring" />
+          </div>
 
           {/* Floating tooltip */}
           {hoverIdx != null && (
