@@ -1,286 +1,395 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Clock, MapPin, Users, User, CalendarDays, Search, X,
+  ArrowLeft,
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  MapPin,
+  Search,
+  UserRound,
+  X,
 } from "lucide-react";
 import { useApp } from "../AppContext";
+import { DropdownRangeDatePicker } from "@/components/ui/dropdown-range-date-picker";
 
-const TH_MONTHS_FULL = [
-  "มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
-  "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม",
-];
-const TH_MONTHS_SHORT = [
-  "ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
-  "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค.",
-];
-const TH_WEEKDAYS = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+const DAY_START = 8;
+const DAY_END = 18;
+const HOURS = Array.from({ length: DAY_END - DAY_START + 1 }, (_, index) => DAY_START + index);
+const EVENT_COLORS = ["rose", "amber", "blue", "violet", "sage"];
 
-function todayISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function toISO(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function fmtDateFull(iso) {
-  if (!iso) return "";
-  const d = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return `${d.getDate()} ${TH_MONTHS_FULL[d.getMonth()]} ${d.getFullYear() + 543}`;
+function fromISO(iso) {
+  return new Date(`${iso}T00:00:00`);
 }
 
-function fmtDateShort(iso) {
-  const d = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return `${d.getDate()} ${TH_MONTHS_SHORT[d.getMonth()]}`;
+function addDays(iso, amount) {
+  const date = fromISO(iso);
+  date.setDate(date.getDate() + amount);
+  return toISO(date);
 }
 
-function dayDiff(iso) {
-  const t = new Date();
-  t.setHours(0, 0, 0, 0);
-  const d = new Date(`${iso}T00:00:00`);
-  return Math.round((d.getTime() - t.getTime()) / (1000 * 60 * 60 * 24));
+function addMonths(iso, amount) {
+  const date = fromISO(iso);
+  date.setDate(1);
+  date.setMonth(date.getMonth() + amount);
+  return toISO(date);
 }
 
-function diffLabel(diff) {
-  if (diff === 0) return { label: "วันนี้", tone: "live" };
-  if (diff === 1) return { label: "พรุ่งนี้", tone: "soon" };
-  if (diff > 1 && diff <= 7) return { label: `อีก ${diff} วัน`, tone: "soon" };
-  if (diff > 7) return { label: `อีก ${diff} วัน`, tone: "future" };
-  if (diff === -1) return { label: "เมื่อวานนี้", tone: "ended" };
-  return { label: `${Math.abs(diff)} วันที่แล้ว`, tone: "ended" };
+function formatDate(iso, options) {
+  return new Intl.DateTimeFormat("en-US", options).format(fromISO(iso));
+}
+
+function parseMeetingTime(value = "") {
+  const times = [...value.matchAll(/(\d{1,2}):(\d{2})/g)].map((match) => (
+    Number(match[1]) + Number(match[2]) / 60
+  ));
+  const start = times[0] ?? 9;
+  const end = times[1] ?? Math.min(start + 1.5, DAY_END);
+  return { start, end: Math.max(end, start + 0.75) };
+}
+
+function eventPosition(time) {
+  const { start, end } = parseMeetingTime(time);
+  const span = DAY_END - DAY_START;
+  const clampedStart = Math.max(DAY_START, Math.min(start, DAY_END - 0.75));
+  const clampedEnd = Math.max(clampedStart + 0.75, Math.min(end, DAY_END));
+  return {
+    "--event-start": `${((clampedStart - DAY_START) / span) * 100}%`,
+    "--event-width": `${((clampedEnd - clampedStart) / span) * 100}%`,
+  };
+}
+
+function buildVisibleDays(activeDate, view, meetings, selectedRange) {
+  if (selectedRange?.from) {
+    const start = toISO(selectedRange.from);
+    const end = toISO(selectedRange.to || selectedRange.from);
+    const dates = [];
+    let cursor = start;
+    while (cursor <= end && dates.length < 62) {
+      dates.push(cursor);
+      cursor = addDays(cursor, 1);
+    }
+    return dates;
+  }
+
+  if (view === "day") return [activeDate];
+
+  if (view === "week") {
+    const date = fromISO(activeDate);
+    const mondayOffset = date.getDay() === 0 ? -6 : 1 - date.getDay();
+    const monday = addDays(activeDate, mondayOffset);
+    return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
+  }
+
+  const active = fromISO(activeDate);
+  const dates = [...new Set(
+    meetings
+      .filter((meeting) => {
+        const date = fromISO(meeting.date);
+        return date.getFullYear() === active.getFullYear() && date.getMonth() === active.getMonth();
+      })
+      .map((meeting) => meeting.date)
+  )].sort();
+
+  return dates.length > 0 ? dates : [toISO(new Date(active.getFullYear(), active.getMonth(), 1))];
 }
 
 export default function StudentSchedulePage() {
   const { studentId, getMeetingsForStudent } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState("upcoming"); // upcoming | past | all
+  const [view, setView] = useState("day");
+  const [selectedDate, setSelectedDate] = useState(null);
   const [search, setSearch] = useState("");
+  const [scope, setScope] = useState("all");
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [selectedRange, setSelectedRange] = useState(undefined);
 
-  const today = todayISO();
+  useEffect(() => {
+    if (!selectedMeeting) return undefined;
 
-  const myMeetings = useMemo(
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setSelectedMeeting(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [selectedMeeting]);
+
+  const meetings = useMemo(
     () => getMeetingsForStudent(studentId),
     [getMeetingsForStudent, studentId]
   );
 
-  const filtered = useMemo(() => {
-    let list = [...myMeetings];
-    if (tab === "upcoming") list = list.filter((m) => m.date >= today);
-    if (tab === "past") list = list.filter((m) => m.date < today);
+  const firstRelevantDate = useMemo(() => {
+    const today = toISO(new Date());
+    const sorted = [...meetings].sort((a, b) => a.date.localeCompare(b.date));
+    return sorted.find((meeting) => meeting.date >= today)?.date || sorted.at(-1)?.date || today;
+  }, [meetings]);
 
-    const q = search.trim().toLowerCase();
-    if (q) {
-      list = list.filter((m) =>
-        (m.title || "").toLowerCase().includes(q) ||
-        (m.location || "").toLowerCase().includes(q) ||
-        (m.description || "").toLowerCase().includes(q)
+  const activeDate = selectedDate || firstRelevantDate;
+
+  const searchedMeetings = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return meetings.filter((meeting) => {
+      const matchesScope = scope === "all" || (
+        scope === "private" ? meeting.attendeeMode !== "all" : meeting.attendeeMode === "all"
       );
-    }
-
-    list.sort((a, b) => {
-      const cmp = a.date.localeCompare(b.date);
-      if (cmp !== 0) return tab === "past" ? -cmp : cmp;
-      return (a.time || "").localeCompare(b.time || "");
+      const matchesSearch = !query || [meeting.title, meeting.location, meeting.description]
+        .some((value) => (value || "").toLowerCase().includes(query));
+      return matchesScope && matchesSearch;
     });
-    return list;
-  }, [myMeetings, tab, search, today]);
+  }, [meetings, scope, search]);
 
-  const grouped = useMemo(() => {
-    const map = new Map();
-    for (const m of filtered) {
-      if (!map.has(m.date)) map.set(m.date, []);
-      map.get(m.date).push(m);
-    }
-    return Array.from(map.entries()); // [ [date, meetings[]], ... ]
-  }, [filtered]);
-
-  const counts = useMemo(() => {
-    const upcoming = myMeetings.filter((m) => m.date >= today).length;
-    const past = myMeetings.length - upcoming;
-    return { upcoming, past, all: myMeetings.length };
-  }, [myMeetings, today]);
-
-  const next = useMemo(
-    () =>
-      myMeetings
-        .filter((m) => m.date >= today)
-        .sort(
-          (a, b) =>
-            a.date.localeCompare(b.date) ||
-            (a.time || "").localeCompare(b.time || "")
-        )[0],
-    [myMeetings, today]
+  const visibleDays = useMemo(
+    () => buildVisibleDays(activeDate, view, searchedMeetings, selectedRange),
+    [activeDate, view, searchedMeetings, selectedRange]
   );
 
+  const pickerRange = useMemo(
+    () => selectedRange || { from: fromISO(activeDate), to: fromISO(activeDate) },
+    [activeDate, selectedRange]
+  );
+
+  const rows = useMemo(() => visibleDays.map((date) => ({
+    date,
+    items: searchedMeetings
+      .filter((meeting) => meeting.date === date)
+      .sort((a, b) => (a.time || "").localeCompare(b.time || "")),
+  })), [searchedMeetings, visibleDays]);
+
+  const visibleCount = rows.reduce((total, row) => total + row.items.length, 0);
+
+  const moveDate = (direction) => {
+    setSelectedRange(undefined);
+    if (view === "month") {
+      setSelectedDate(addMonths(activeDate, direction));
+      return;
+    }
+    setSelectedDate(addDays(activeDate, direction * (view === "week" ? 7 : 1)));
+  };
+
+  const dateHeading = selectedRange?.from
+    ? `${formatDate(toISO(selectedRange.from), { month: "short", day: "numeric" })} – ${formatDate(toISO(selectedRange.to || selectedRange.from), { month: "short", day: "numeric", year: "numeric" })}`
+    : view === "month"
+    ? formatDate(activeDate, { month: "long", year: "numeric" })
+    : view === "week"
+    ? `${formatDate(visibleDays[0], { month: "short", day: "numeric" })} – ${formatDate(visibleDays.at(-1), { month: "short", day: "numeric", year: "numeric" })}`
+    : formatDate(activeDate, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+  const cycleScope = () => {
+    setScope((current) => current === "all" ? "class" : current === "class" ? "private" : "all");
+  };
+
   return (
-    <div className="main-wrapper sched-page">
+    <div className="main-wrapper sched-page personal-schedule-page">
       <main className="main-content">
-        <button className="back-btn" onClick={() => navigate("/student")}>
-          <ArrowLeft size={20} />
-          <span>กลับ</span>
-        </button>
-
-        <h1 className="page-title">My Schedule</h1>
-        <p className="page-date">
-          ตารางนัดทั้งหมดของ {studentId} · เห็นเฉพาะนัดที่อาจารย์เลือกคุณ + นัดทั้งห้อง
-        </p>
-
-        {next && (
-          <div className="sched-next-card fade-in">
-            <div className="sched-next-eyebrow">นัดถัดไป</div>
-            <h3 className="sched-next-title">{next.title}</h3>
-            <ul className="sched-next-meta">
-              <li>
-                <CalendarDays size={15} />
-                <span>{fmtDateFull(next.date)}</span>
-              </li>
-              {next.time && (
-                <li>
-                  <Clock size={15} />
-                  <span>{next.time}</span>
-                </li>
-              )}
-              {next.location && (
-                <li>
-                  <MapPin size={15} />
-                  <span>{next.location}</span>
-                </li>
-              )}
-              <li>
-                {next.attendeeMode === "all" ? (
-                  <><Users size={15} /><span>นัดทั้งห้อง</span></>
-                ) : (
-                  <><User size={15} /><span>นัด 1:1</span></>
-                )}
-              </li>
-            </ul>
-            <span className={`sched-next-badge tone-${diffLabel(dayDiff(next.date)).tone}`}>
-              {diffLabel(dayDiff(next.date)).label}
-            </span>
+        <header className="personal-schedule-header">
+          <div>
+            <button className="back-btn" onClick={() => navigate("/student")}>
+              <ArrowLeft size={18} />
+              <span>Back</span>
+            </button>
+            <h1 className="page-title">My schedule</h1>
+            <p className="page-date">Your personal classes, meetings and appointments.</p>
           </div>
-        )}
 
-        <div className="sched-toolbar fade-in-delay-1">
-          <div className="t-pill-row">
-            <button
-              type="button"
-              className={`t-tab ${tab === "upcoming" ? "on" : ""}`}
-              onClick={() => setTab("upcoming")}
-            >
-              ที่กำลังจะมาถึง · {counts.upcoming}
-            </button>
-            <button
-              type="button"
-              className={`t-tab ${tab === "past" ? "on" : ""}`}
-              onClick={() => setTab("past")}
-            >
-              ที่ผ่านมา · {counts.past}
-            </button>
-            <button
-              type="button"
-              className={`t-tab ${tab === "all" ? "on" : ""}`}
-              onClick={() => setTab("all")}
-            >
-              ทั้งหมด · {counts.all}
-            </button>
+          <div className="personal-schedule-actions">
+            <label className="personal-schedule-search">
+              <Search size={17} />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search schedule"
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch("")} aria-label="Clear search">
+                  <X size={14} />
+                </button>
+              )}
+            </label>
           </div>
-          <div className="sched-search">
-            <Search size={14} />
-            <input
-              type="text"
-              placeholder="ค้นหาหัวข้อ / สถานที่"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button
-                type="button"
-                aria-label="ล้างคำค้น"
-                onClick={() => setSearch("")}
-              >
-                <X size={13} />
+        </header>
+
+        <section className="personal-schedule-board fade-in">
+          <div className="personal-schedule-toolbar">
+            <div className="personal-date-control">
+              <div className="personal-date-nav">
+                <button type="button" onClick={() => moveDate(-1)} aria-label="Previous period">
+                  <ChevronLeft size={18} />
+                </button>
+                <button type="button" onClick={() => moveDate(1)} aria-label="Next period">
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+              <div className="personal-date-copy">
+                <h2>{dateHeading}</h2>
+                <span>{visibleCount} {visibleCount === 1 ? "appointment" : "appointments"}</span>
+              </div>
+            </div>
+
+            <div className="personal-toolbar-controls">
+              <div className="personal-view-switch" aria-label="Calendar view">
+                {["day", "week", "month"].map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={view === option ? "active" : ""}
+                    onClick={() => {
+                      setSelectedRange(undefined);
+                      setView(option);
+                    }}
+                  >
+                    {option[0].toUpperCase() + option.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              <button type="button" className="personal-filter-btn" onClick={cycleScope}>
+                {scope === "all" ? "All meetings" : scope === "class" ? "Class" : "1:1"}
+                <ChevronDown size={15} />
               </button>
-            )}
-          </div>
-        </div>
 
-        {grouped.length === 0 ? (
-          <div className="sched-empty fade-in-delay-2">
-            <CalendarDays size={48} strokeWidth={1.2} />
-            <p>
-              {search
-                ? "ไม่พบนัดที่ตรงกับคำค้น"
-                : tab === "upcoming"
-                ? "ไม่มีนัดที่กำลังจะมาถึง"
-                : tab === "past"
-                ? "ยังไม่มีประวัตินัดที่ผ่านมา"
-                : "ยังไม่มีนัดในระบบ"}
-            </p>
-          </div>
-        ) : (
-          <div className="sched-list fade-in-delay-2">
-            {grouped.map(([date, items]) => {
-              const diff = dayDiff(date);
-              const dl = diffLabel(diff);
-              const d = new Date(`${date}T00:00:00`);
-              return (
-                <section key={date} className="sched-day">
-                  <header className="sched-day-head">
-                    <div className="sched-day-date">
-                      <span className="sched-day-num">{d.getDate()}</span>
-                      <span className="sched-day-mon">
-                        {TH_MONTHS_SHORT[d.getMonth()]}
-                      </span>
-                      <span className="sched-day-wd">
-                        {TH_WEEKDAYS[d.getDay()]}.
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="sched-day-title">{fmtDateFull(date)}</h3>
-                      <span className={`sched-day-badge tone-${dl.tone}`}>
-                        {dl.label}
-                      </span>
-                    </div>
-                  </header>
+              <DropdownRangeDatePicker
+                value={pickerRange}
+                onApply={(range) => {
+                  if (!range?.from) {
+                    setSelectedRange(undefined);
+                    return;
+                  }
 
-                  <ul className="sched-day-items">
-                    {items.map((m) => (
-                      <li key={m.id} className="sched-item">
-                        <div className="sched-item-bar" />
-                        <div className="sched-item-body">
-                          <div className="sched-item-head">
-                            <h4 className="sched-item-title">{m.title}</h4>
-                            <span
-                              className={`sched-item-tag tone-${
-                                m.attendeeMode === "all" ? "all" : "private"
-                              }`}
-                            >
-                              {m.attendeeMode === "all" ? "ทั้งห้อง" : "1:1"}
-                            </span>
-                          </div>
-                          <ul className="sched-item-meta">
-                            {m.time && (
-                              <li>
-                                <Clock size={13} />
-                                <span>{m.time}</span>
-                              </li>
-                            )}
-                            {m.location && (
-                              <li>
-                                <MapPin size={13} />
-                                <span>{m.location}</span>
-                              </li>
-                            )}
-                          </ul>
-                          {m.description && (
-                            <p className="sched-item-desc">{m.description}</p>
-                          )}
+                  const from = toISO(range.from);
+                  const to = toISO(range.to || range.from);
+                  setSelectedDate(from);
+                  setSelectedRange(from === to ? undefined : range);
+                  setView("day");
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="personal-timeline-scroll">
+            <div className="personal-timeline">
+              <div className="personal-time-corner">Personal calendar</div>
+              <div className="personal-time-axis">
+                {HOURS.map((hour) => (
+                  <span key={hour}>{hour === 12 ? "Noon" : hour > 12 ? `${hour - 12} pm` : `${hour} am`}</span>
+                ))}
+              </div>
+
+              {rows.map((row) => (
+                <React.Fragment key={row.date}>
+                  <div className="personal-row-label">
+                    <span className="personal-row-day">
+                      {formatDate(row.date, { weekday: "short" })}
+                    </span>
+                    <strong>{formatDate(row.date, { month: "short", day: "numeric" })}</strong>
+                    <span>{row.items.length ? `${row.items.length} scheduled` : "Available"}</span>
+                  </div>
+
+                  <div
+                    className={`personal-row-track ${row.items.length ? "has-events" : "is-empty"}`}
+                    style={{ "--event-rows": Math.max(row.items.length, 1) }}
+                  >
+                    <div className="personal-grid-lines" aria-hidden="true">
+                      {HOURS.map((hour) => <i key={hour} />)}
+                    </div>
+
+                    {row.items.length === 0 ? (
+                      <div className="personal-empty-slot">
+                        <Clock3 size={16} /> No appointments scheduled
+                      </div>
+                    ) : row.items.map((meeting, index) => (
+                      <button
+                        type="button"
+                        key={meeting.id}
+                        className={`personal-event color-${EVENT_COLORS[index % EVENT_COLORS.length]}`}
+                        style={{ ...eventPosition(meeting.time), "--event-row": index }}
+                        title={`${meeting.title}${meeting.time ? ` · ${meeting.time}` : ""}`}
+                        aria-haspopup="dialog"
+                        onClick={() => setSelectedMeeting(meeting)}
+                      >
+                        <div className="personal-event-main">
+                          <strong>{meeting.title}</strong>
+                          {meeting.time && <span>{meeting.time}</span>}
                         </div>
-                      </li>
+                        <div className="personal-event-tags">
+                          {meeting.location && <span className="location-tag"><MapPin size={12} />{meeting.location}</span>}
+                          <span className="type-tag"><UserRound size={12} />{meeting.attendeeMode === "all" ? "Class" : "1:1"}</span>
+                        </div>
+                        <ChevronRight className="personal-event-open" size={15} aria-hidden="true" />
+                      </button>
                     ))}
-                  </ul>
-                </section>
-              );
-            })}
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {selectedMeeting && (
+          <div
+            className="schedule-event-overlay"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setSelectedMeeting(null);
+            }}
+          >
+            <section
+              className="schedule-event-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="schedule-event-title"
+            >
+              <header className="schedule-event-dialog-head">
+                <div>
+                  <span>Appointment details</span>
+                  <h2 id="schedule-event-title">{selectedMeeting.title}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMeeting(null)}
+                  aria-label="Close appointment details"
+                >
+                  <X size={18} />
+                </button>
+              </header>
+
+              <div className="schedule-event-dialog-body">
+                <div className="schedule-event-detail">
+                  <CalendarDays size={18} />
+                  <div><span>Date</span><strong>{formatDate(selectedMeeting.date, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</strong></div>
+                </div>
+                <div className="schedule-event-detail">
+                  <Clock3 size={18} />
+                  <div><span>Time</span><strong>{selectedMeeting.time || "Time not specified"}</strong></div>
+                </div>
+                <div className="schedule-event-detail">
+                  <MapPin size={18} />
+                  <div><span>Location</span><strong>{selectedMeeting.location || "Location not specified"}</strong></div>
+                </div>
+                <div className="schedule-event-detail">
+                  <UserRound size={18} />
+                  <div><span>Meeting type</span><strong>{selectedMeeting.attendeeMode === "all" ? "Class meeting" : "One-to-one meeting"}</strong></div>
+                </div>
+
+                {selectedMeeting.description && (
+                  <div className="schedule-event-description">
+                    <span>Notes</span>
+                    <p>{selectedMeeting.description}</p>
+                  </div>
+                )}
+              </div>
+
+              <footer className="schedule-event-dialog-footer">
+                <button type="button" onClick={() => setSelectedMeeting(null)}>Close</button>
+              </footer>
+            </section>
           </div>
         )}
       </main>
