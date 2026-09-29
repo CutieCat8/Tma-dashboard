@@ -254,6 +254,7 @@
 }
 
 .personal-schedule-header {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;

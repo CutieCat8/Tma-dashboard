@@ -53,7 +53,7 @@ export function useCourseSchedule({ data, setData, studentId }) {
         termStart: draft.termStart,
         termEnd: draft.termEnd,
         sessions: normalizeSessions(sessions),
-        exceptions: [],
+        exceptions: Array.isArray(payload.exceptions) ? payload.exceptions : [],
         verificationStatus: "self-reported",
         verifiedBy: null,
         verifiedAt: null,

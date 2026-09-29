@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Upload,
   Clock3,
   MapPin,
   BookOpen,
@@ -16,6 +17,8 @@ import {
 import { useApp } from "@/app/providers/AppContext";
 import { DropdownRangeDatePicker } from "@/components/ui/dropdown-range-date-picker";
 import { CourseDetailDialog, MeetingDetailDialog } from "./components/StudentScheduleDialogs";
+import { IcsImportDialog } from "./components/IcsImportDialog";
+import { parseIcs } from "./lib/ics-import";
 import { parseLegacyMeetingTime, timeToMinutes } from "./lib/meeting-time";
 
 const DAY_START = 7;
@@ -112,7 +115,7 @@ function buildVisibleDays(activeDate, view, selectedRange) {
 }
 
 export default function StudentSchedulePage() {
-  const { studentId, getMeetingsForStudent, getCourseOccurrencesForStudent, getCourseById, removeCourse } = useApp();
+  const { studentId, getMeetingsForStudent, getCoursesForStudent, addCourse, getCourseOccurrencesForStudent, getCourseById, removeCourse } = useApp();
   const navigate = useNavigate();
   const [view, setView] = useState("day");
   const [selectedDate, setSelectedDate] = useState(null);
@@ -124,6 +127,9 @@ export default function StudentSchedulePage() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedRange, setSelectedRange] = useState(undefined);
   const timelineScrollRef = useRef(null);
+  const importInputRef = useRef(null);
+  const [importResult, setImportResult] = useState(null);
+  const [importError, setImportError] = useState("");
 
   useEffect(() => {
     if (!selectedMeeting && !selectedCourse) return undefined;
@@ -227,6 +233,45 @@ export default function StudentSchedulePage() {
     setSelectedDate(addDays(activeDate, direction * (view === "week" ? 7 : 1)));
   };
 
+  // Saved courses by import key, e.g. "955110 intro to data" (also by bare name).
+  const existingByKey = new Map();
+  getCoursesForStudent(studentId).forEach((course) => {
+    [`${course.courseCode} ${course.courseName}`.trim().toLowerCase(), course.courseName.trim().toLowerCase()].forEach((key) => {
+      const list = existingByKey.get(key) || [];
+      if (!list.includes(course)) existingByKey.set(key, [...list, course]);
+    });
+  });
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setImportError("");
+    try {
+      setImportResult(parseIcs(await file.text()));
+    } catch {
+      setImportError("Could not read that calendar file.");
+    }
+  };
+
+  const confirmImport = (courses) => {
+    // Re-importing replaces the saved course of the same code/name. Teacher-verified
+    // courses are never replaced; the old colour and private note are carried over.
+    const replaced = new Set();
+    courses.forEach((course) => {
+      const matches = (existingByKey.get(course.dupKey) || []).filter(
+        (old) => old.verificationStatus === "self-reported" && !replaced.has(old.id)
+      );
+      matches.forEach((old) => {
+        replaced.add(old.id);
+        removeCourse(old.id);
+      });
+      const keep = matches[0] ? { color: matches[0].color, privateNote: matches[0].privateNote } : {};
+      addCourse({ ...course, ...keep });
+    });
+    setImportResult(null);
+  };
+
   const goToToday = () => {
     setSelectedRange(undefined);
     setSelectedDate(toISO(new Date()));
@@ -260,6 +305,13 @@ export default function StudentSchedulePage() {
     <div className="main-wrapper sched-page personal-schedule-page">
       <main className="main-content">
         <header className="personal-schedule-header">
+          <div className="personal-import-slot">
+            {importError && <span className="personal-import-error" role="alert">{importError}</span>}
+            <input ref={importInputRef} type="file" accept=".ics,text/calendar" hidden onChange={handleImportFile} />
+            <button type="button" className="personal-import-btn" onClick={() => importInputRef.current?.click()}>
+              <Upload size={16} /> Import .ics
+            </button>
+          </div>
           <div>
             <button className="back-btn" onClick={() => navigate("/student")}>
               <ArrowLeft size={18} />
@@ -458,6 +510,14 @@ export default function StudentSchedulePage() {
         </section>
 
         <MeetingDetailDialog meeting={selectedMeeting} onClose={() => setSelectedMeeting(null)} />
+        {importResult && (
+          <IcsImportDialog
+            result={importResult}
+            existingByKey={existingByKey}
+            onImport={confirmImport}
+            onClose={() => setImportResult(null)}
+          />
+        )}
         <CourseDetailDialog
           course={selectedCourse}
           onClose={() => setSelectedCourse(null)}

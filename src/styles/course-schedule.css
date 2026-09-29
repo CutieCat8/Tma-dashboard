@@ -181,3 +181,94 @@
 @media (min-width: 761px) and (max-width: 1200px) {
   .course-form-shell { padding-inline: 48px; }
 }
+
+.personal-import-slot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.personal-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid #d6dce1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334354;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.personal-import-btn:hover {
+  background: #f5f7f8;
+  border-color: #c8ced5;
+}
+
+.ics-import-dialog .schedule-event-dialog-body {
+  display: grid;
+  gap: 10px;
+  max-height: min(60vh, 460px);
+  overflow-y: auto;
+}
+
+.ics-import-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e3e7ea;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.ics-import-row.is-duplicate {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.ics-import-swatch {
+  flex: none;
+  width: 4px;
+  align-self: stretch;
+  border-radius: 999px;
+}
+
+.ics-import-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ics-import-copy strong {
+  color: #15202d;
+  font-size: 13px;
+}
+
+.ics-import-copy small,
+.ics-import-note {
+  color: #667281;
+  font-size: 12px;
+}
+
+.ics-import-note {
+  margin: 0;
+}
+
+.personal-import-error {
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ics-import-dialog .schedule-event-dialog-footer button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
