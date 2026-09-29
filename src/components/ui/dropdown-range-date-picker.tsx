@@ -77,11 +77,15 @@ function DropdownRangeDatePicker({
           <span className="truncate overflow-hidden">{formattedValue}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="personal-range-popover w-auto p-4" align="end">
-        <div className="space-y-4">
-          <div className="flex gap-2">
+      <PopoverContent
+        className="personal-range-popover w-auto p-3"
+        align="end"
+        collisionPadding={12}
+      >
+        <div className="personal-range-content">
+          <div className="personal-range-selectors flex gap-2">
             <Select value={year.toString()} onValueChange={(nextYear) => setYear(Number(nextYear))}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="h-9 w-[104px]">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
@@ -92,7 +96,7 @@ function DropdownRangeDatePicker({
             </Select>
 
             <Select value={month.toString()} onValueChange={(nextMonth) => setMonth(Number(nextMonth))}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="h-9 w-[124px]">
                 <SelectValue placeholder="Month" />
               </SelectTrigger>
               <SelectContent>
@@ -105,19 +109,21 @@ function DropdownRangeDatePicker({
             </Select>
           </div>
 
-          <Calendar
-            mode="range"
-            selected={selected}
-            onSelect={setSelected}
-            month={displayMonth}
-            onMonthChange={(date) => {
-              setMonth(date.getMonth())
-              setYear(date.getFullYear())
-            }}
-            className="rounded-md border"
-          />
+          <div className="personal-range-calendar-scroll">
+            <Calendar
+              mode="range"
+              selected={selected}
+              onSelect={setSelected}
+              month={displayMonth}
+              onMonthChange={(date) => {
+                setMonth(date.getMonth())
+                setYear(date.getFullYear())
+              }}
+              className="personal-range-calendar rounded-md border p-2"
+            />
+          </div>
 
-          <div className="flex justify-between pt-2">
+          <div className="personal-range-actions flex justify-between">
             <Button type="button" size="sm" variant="ghost" onClick={clearSelection} disabled={!selected}>
               Clear
             </Button>
