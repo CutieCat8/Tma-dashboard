@@ -12,7 +12,7 @@ These instructions apply to every agent session working in this repository.
 
 - Read and search only the files relevant to the current task before expanding scope.
 - Prefer targeted `rg` searches over broad repository dumps.
-- Do not repeat repository-wide analysis that is already documented in `README.md`, Git history, or `plans/`.
+- Do not repeat repository-wide analysis that is already documented in `README.md`, `docs/project-state.md`, or Git history.
 - Run focused checks while developing. Run the full typecheck, test suite, and production build once near the end of a coherent feature unless risk requires otherwise.
 
 ## Browser and visual QA
@@ -32,5 +32,6 @@ These instructions apply to every agent session working in this repository.
 
 ## Session handoff
 
-- Use `README.md`, files under `plans/`, and recent Git history as the primary context for a new session.
+- Start a new session by reading `docs/project-state.md`, then consult `README.md` and recent Git history as needed.
+- Treat repository documentation and Git as the source of truth; external agent memory should only point back to these files.
 - After completing a feature, leave the repository in a clean, documented state so another session can continue without rereading a long chat history.

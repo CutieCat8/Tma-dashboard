@@ -46,7 +46,7 @@ npm run build
 ```text
 .
 ├─ index.html                 # HTML entry ของ Vite (ควรอยู่ที่ root)
-├─ plans/                     # เอกสาร requirement และ handoff
+├─ docs/                      # สถานะปัจจุบันและเอกสารส่งต่องาน
 └─ src/
    ├─ app/
    │  ├─ App.jsx              # routes และ application shells
@@ -87,8 +87,8 @@ npm run build
 ฝั่งอาจารย์จะแสดงสถานะ Busy/Available ของนักเรียน สามารถเปิดดูรายละเอียดวิชา
 ที่ทำให้ไม่ว่าง และตรวจ conflict ก่อนสร้างนัดทั้งห้องหรือรายบุคคลได้
 
-รายละเอียด requirement และแนวทางพัฒนาต่ออยู่ที่
-[`plans/course-availability-scheduling-handoff.md`](plans/course-availability-scheduling-handoff.md)
+สถานะล่าสุด ข้อจำกัด และงานที่ควรพิจารณาต่ออยู่ที่
+[`docs/project-state.md`](docs/project-state.md)
 
 ## ข้อมูลและข้อจำกัดของเวอร์ชันปัจจุบัน
 
