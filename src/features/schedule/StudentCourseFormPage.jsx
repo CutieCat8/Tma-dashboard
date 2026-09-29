@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, BookOpen, Library, Save } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/app/providers/AppContext";
+import CourseExceptionsEditor from "./components/CourseExceptionsEditor";
 import WeeklySessionEditor, { emptySession } from "./components/WeeklySessionEditor";
 import { ScheduleDatePicker } from "./components/ScheduleFormControls";
 
@@ -15,6 +16,7 @@ const EMPTY_FORM = {
   notes: "",
   privateNote: "",
   sessions: [emptySession()],
+  exceptions: [],
 };
 
 export default function StudentCourseFormPage() {
@@ -105,6 +107,10 @@ export default function StudentCourseFormPage() {
           </section>
 
           <WeeklySessionEditor sessions={form.sessions} onChange={(sessions) => update("sessions", sessions)} errors={errors} />
+
+          {courseId && (
+            <CourseExceptionsEditor exceptions={form.exceptions || []} onChange={(exceptions) => update("exceptions", exceptions)} />
+          )}
 
           <section className="course-form-section course-form-notes">
             <label><span>Verification note visible to teacher</span><textarea rows={3} value={form.notes} onChange={(event) => update("notes", event.target.value)} placeholder="Section number or supporting timetable information" /></label>

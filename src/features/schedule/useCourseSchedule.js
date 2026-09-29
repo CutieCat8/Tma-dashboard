@@ -122,7 +122,9 @@ export function useCourseSchedule({ data, setData, studentId }) {
         const scalarFieldChanged = COURSE_FIELDS_THAT_RESET_VERIFICATION.some(
           (field) => draft[field] !== existing[field]
         );
-        const scheduleChanged = sessionsChanged || scalarFieldChanged;
+        const nextExceptions = Array.isArray(payload.exceptions) ? payload.exceptions : existing.exceptions;
+        const exceptionsChanged = JSON.stringify(nextExceptions) !== JSON.stringify(existing.exceptions);
+        const scheduleChanged = sessionsChanged || scalarFieldChanged || exceptionsChanged;
         const shouldResetVerification = scheduleChanged && existing.verificationStatus !== "self-reported";
 
         const updated = {
@@ -132,6 +134,7 @@ export function useCourseSchedule({ data, setData, studentId }) {
           termStart: draft.termStart,
           termEnd: draft.termEnd,
           sessions: normalizeSessions(nextSessions),
+          exceptions: nextExceptions,
           color: payload.color !== undefined ? payload.color.trim() : existing.color,
           defaultLocation:
             payload.defaultLocation !== undefined ? payload.defaultLocation.trim() : existing.defaultLocation,

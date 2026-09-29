@@ -289,6 +289,17 @@
 .my-course-actions button { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border: 1px solid #d8dee7; border-radius: 10px; background: #fff; color: #334155; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .my-course-actions button:hover { background: #f5f7f8; }
 
+.course-exceptions-empty { margin: 0 0 14px; color: #64748b; font-size: 13px; }
+.course-exceptions-list { display: grid; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; max-height: 320px; overflow-y: auto; }
+.course-exceptions-list li { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid #e3e7ea; border-radius: 10px; }
+.course-exceptions-list li strong { flex: none; min-width: 150px; color: #15202d; font-size: 13px; }
+.course-exceptions-list li .course-session-remove { margin-left: auto; }
+.course-exception-tag { padding: 4px 10px; border-radius: 999px; background: #fee2e2; color: #991b1b; font-size: 12px; font-weight: 700; }
+.course-exception-tag.is-replacement { background: #fef3c7; color: #92400e; }
+.course-exceptions-add { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.course-exceptions-add .course-cancel-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
+.course-exceptions-add .course-cancel-btn:disabled { opacity: .5; cursor: not-allowed; }
+
 @media (max-width: 720px) {
   .my-course-card { grid-template-columns: 1fr; }
   .my-course-actions { justify-content: flex-end; }
