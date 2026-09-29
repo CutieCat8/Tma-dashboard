@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -17,8 +17,10 @@ import { useApp } from "@/app/providers/AppContext";
 import { DropdownRangeDatePicker } from "@/components/ui/dropdown-range-date-picker";
 import { CourseDetailDialog, MeetingDetailDialog } from "./components/StudentScheduleDialogs";
 
-const DAY_START = 8;
-const DAY_END = 18;
+const DAY_START = 7;
+const DAY_END = 20;
+const HOUR_COLUMN_WIDTH = 74;
+const ROW_LABEL_WIDTH = 205;
 const EVENT_COLORS = ["rose", "amber", "blue", "violet", "sage"];
 
 function toISO(date) {
@@ -105,6 +107,7 @@ export default function StudentSchedulePage() {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedRange, setSelectedRange] = useState(undefined);
+  const timelineScrollRef = useRef(null);
 
   useEffect(() => {
     if (!selectedMeeting && !selectedCourse) return undefined;
@@ -115,6 +118,24 @@ export default function StudentSchedulePage() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [selectedMeeting, selectedCourse]);
+
+  useEffect(() => {
+    const scrollArea = timelineScrollRef.current;
+    if (!scrollArea) return undefined;
+
+    const scrollHorizontally = (event) => {
+      if (!event.shiftKey) return;
+
+      const scrollDistance = event.deltaY || event.deltaX;
+      if (!scrollDistance) return;
+
+      event.preventDefault();
+      scrollArea.scrollLeft += scrollDistance;
+    };
+
+    scrollArea.addEventListener("wheel", scrollHorizontally, { passive: false });
+    return () => scrollArea.removeEventListener("wheel", scrollHorizontally);
+  }, []);
 
   const meetings = useMemo(
     () => getMeetingsForStudent(studentId),
@@ -296,8 +317,19 @@ export default function StudentSchedulePage() {
             </div>
           </div>
 
-          <div className="personal-timeline-scroll">
-            <div className="personal-timeline">
+          <div
+            ref={timelineScrollRef}
+            className="personal-timeline-scroll"
+            tabIndex={0}
+            aria-label="Schedule timeline. Hold Shift and scroll to move horizontally."
+          >
+            <div
+              className="personal-timeline"
+              style={{
+                "--timeline-hours": timeline.hours.length,
+                "--timeline-min-width": `${ROW_LABEL_WIDTH + timeline.hours.length * HOUR_COLUMN_WIDTH}px`,
+              }}
+            >
               <div className="personal-time-corner">Personal calendar</div>
               <div className="personal-time-axis">
                 {timeline.hours.map((hour) => (

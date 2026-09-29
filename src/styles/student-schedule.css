@@ -503,11 +503,12 @@
 
 .personal-timeline-scroll {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scrollbar-color: #c9d0d7 transparent;
 }
 
 .personal-timeline {
-  min-width: 980px;
+  min-width: max(980px, var(--timeline-min-width));
   display: grid;
   grid-template-columns: 205px minmax(760px, 1fr);
 }
@@ -529,7 +530,7 @@
 
 .personal-time-axis {
   display: grid;
-  grid-template-columns: repeat(11, minmax(74px, 1fr));
+  grid-template-columns: repeat(var(--timeline-hours), minmax(74px, 1fr));
   align-items: end;
 }
 
@@ -580,7 +581,7 @@
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(11, 1fr);
+  grid-template-columns: repeat(var(--timeline-hours), 1fr);
   pointer-events: none;
 }
 
