@@ -1,0 +1,248 @@
+/* =========================================================
+   Teacher Roster page (/teacher/roster)
+   ========================================================= */
+.roster-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 22px;
+  align-items: flex-start;
+}
+.roster-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.roster-search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 13.5px;
+  font-family: inherit;
+}
+.roster-list-card { padding: 12px; }
+.roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.roster-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.roster-row:hover { background: #f9fafb; }
+.roster-row.on {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+.roster-row-seat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.roster-row.on .roster-row-seat {
+  background: #fff;
+  color: #4338ca;
+}
+.roster-row-info { min-width: 0; }
+.roster-row-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.roster-row-id {
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+.roster-row-status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.roster-row-status.on-time { background: #10b981; }
+.roster-row-status.late    { background: #f59e0b; }
+.roster-row-status.missing { background: #ef4444; }
+
+.roster-detail-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.roster-hero {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #111827, #312e81);
+  color: #fff;
+  margin-bottom: 16px;
+}
+.roster-hero-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 22px;
+}
+.roster-hero-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.roster-hero-id {
+  font-size: 13px;
+  opacity: 0.78;
+  margin: 0;
+}
+.roster-hero-status {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.16);
+}
+.roster-hero-status.on-time { background: #10b981; color: #03281b; }
+.roster-hero-status.late { background: #f59e0b; color: #3f2606; }
+.roster-hero-status.missing { background: #ef4444; color: #3a0a0a; }
+
+.roster-stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.roster-stat {
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+}
+.roster-stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.roster-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 4px;
+}
+.roster-stat-sub {
+  font-size: 11.5px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.roster-section { margin-top: 16px; }
+.roster-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.roster-section h3 .count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.roster-checks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.roster-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #eef0f3;
+  background: #fafafa;
+  font-size: 13px;
+}
+.roster-check.done { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.roster-check.miss { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+
+.roster-meeting-list,
+.roster-ann-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.roster-meeting,
+.roster-ann {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fafafa;
+  border: 1px solid #eef0f3;
+  font-size: 13px;
+}
+.roster-meeting-title,
+.roster-ann-title {
+  font-weight: 600;
+  color: #111827;
+}
+.roster-meeting-meta,
+.roster-ann-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+@media (max-width: 1080px) {
+  .roster-grid { grid-template-columns: 1fr; }
+  .roster-list { max-height: 320px; }
+  .roster-stat-row { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .roster-checks { grid-template-columns: 1fr; }
+  .roster-stat-row { grid-template-columns: 1fr; }
+}
+
