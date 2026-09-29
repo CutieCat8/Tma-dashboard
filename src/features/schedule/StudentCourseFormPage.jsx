@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Save } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, BookOpen, Library, Save } from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/app/providers/AppContext";
 import WeeklySessionEditor, { emptySession } from "./components/WeeklySessionEditor";
 import { ScheduleDatePicker } from "./components/ScheduleFormControls";
@@ -20,6 +20,7 @@ const EMPTY_FORM = {
 export default function StudentCourseFormPage() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const returnTo = useLocation().state?.from || "/student/schedule";
   const { studentId, addCourse, updateCourse, getCourseById } = useApp();
   const existing = useMemo(() => courseId ? getCourseById(courseId) : null, [courseId, getCourseById]);
   const [form, setForm] = useState(() => existing ? { ...EMPTY_FORM, ...existing, sessions: existing.sessions.map((session) => ({ ...session })) } : EMPTY_FORM);
@@ -44,13 +45,13 @@ export default function StudentCourseFormPage() {
 
   const goBack = () => {
     if (dirty && !saving && !window.confirm("Discard your unsaved course changes?")) return;
-    navigate("/student/schedule");
+    navigate(returnTo);
   };
 
   if (courseId && (!existing || existing.studentId !== studentId)) {
     return (
       <div className="main-wrapper course-form-page"><main className="main-content course-form-shell">
-        <button className="back-btn" onClick={() => navigate("/student/schedule")}><ArrowLeft size={18} /> Back</button>
+        <button className="back-btn" onClick={() => navigate(returnTo)}><ArrowLeft size={18} /> Back</button>
         <div className="course-form-missing"><BookOpen size={32} /><h1>Course not found</h1><p>This course does not exist or you cannot edit it.</p></div>
       </main></div>
     );
@@ -70,16 +71,23 @@ export default function StudentCourseFormPage() {
       setSaving(false);
       return;
     }
-    navigate("/student/schedule", { replace: true });
+    navigate(returnTo, { replace: true });
   };
 
   return (
     <div className="main-wrapper course-form-page">
       <main className="main-content course-form-shell">
-        <button className="back-btn" type="button" onClick={goBack}><ArrowLeft size={18} /> Back to schedule</button>
+        <button className="back-btn" type="button" onClick={goBack}><ArrowLeft size={18} /> {returnTo === "/student/schedule" ? "Back to schedule" : "Back to my courses"}</button>
         <header className="course-form-title-row">
           <div><span>Personal timetable</span><h1>{courseId ? "Edit course" : "Add course"}</h1><p>Set the term dates and every weekly class time.</p></div>
-          <div className="course-form-status">{existing?.verificationStatus === "verified" ? "Verified course" : "Self-reported"}</div>
+          <div className="course-form-title-actions">
+            {!courseId && (
+              <button type="button" className="course-cancel-btn course-list-link" onClick={() => navigate("/student/schedule/courses")}>
+                <Library size={16} /> My courses
+              </button>
+            )}
+            <div className="course-form-status">{existing?.verificationStatus === "verified" ? "Verified course" : "Self-reported"}</div>
+          </div>
         </header>
 
         <form className="course-form-card" onSubmit={submit}>

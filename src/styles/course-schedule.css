@@ -272,3 +272,26 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+.course-form-title-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.course-list-link { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; }
+
+.my-courses-search { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid #d8dee7; border-radius: 12px; background: #fff; color: #64748b; }
+.my-courses-search input { width: 180px; border: 0; outline: 0; background: transparent; font: inherit; color: #111827; }
+
+.my-courses-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.my-course-card { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 16px 20px; border: 1px solid #dde3ea; border-left: 5px solid var(--course-color, #2563eb); border-radius: 14px; background: #fff; }
+.my-course-main { display: grid; gap: 3px; min-width: 0; }
+.my-course-main strong { color: #15202d; font-size: 15px; overflow-wrap: anywhere; }
+.my-course-main span { color: #334155; font-size: 13px; font-weight: 600; }
+.my-course-main small { color: #667281; font-size: 12px; }
+.my-course-actions { display: flex; gap: 8px; }
+.my-course-actions button { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border: 1px solid #d8dee7; border-radius: 10px; background: #fff; color: #334155; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.my-course-actions button:hover { background: #f5f7f8; }
+
+@media (max-width: 720px) {
+  .my-course-card { grid-template-columns: 1fr; }
+  .my-course-actions { justify-content: flex-end; }
+  .my-courses-search input { width: 100%; }
+  .my-courses-search { width: 100%; }
+}
