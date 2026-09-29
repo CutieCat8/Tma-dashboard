@@ -6,6 +6,23 @@
 >
 > Branch ณ เวลาส่งต่อ: `main`
 
+## Implementation status (updated 2026-09-29)
+
+The same-browser prototype is implemented end-to-end:
+
+- Student course add/edit/delete routes and weekly-session form
+- Recurring occurrences rendered together with teacher meetings
+- Course detail dialog with edit/delete and private-note visibility for the owner
+- Normalized meeting `startTime` / `endTime`
+- Per-attendee Busy/Available summary before a teacher saves a meeting
+- Conflict detail popup showing every overlapping course/meeting
+- Teacher verification (`verified` / `needs-review`) with audit entries
+- Explicit reason required when a teacher overrides a Busy warning
+- Pure recurrence/conflict/validation tests: 25 passing
+- `npm run typecheck` and `npm run build`: passing
+
+Remaining production gate: replace localStorage with the shared authenticated backend and enforce section-scoped authorization on the server. Until that is done, data is shared only between roles using the same browser storage and the feature must be described as a prototype, not multi-device production-ready.
+
 ## 1. เป้าหมายของระบบ
 
 ระบบต้องช่วยให้อาจารย์นัดนักเรียนทั้งห้องหรือรายบุคคลได้ โดยไม่ต้องถามนักเรียนทีละคนว่าเวลาใดติดเรียน นักเรียนต้องเพิ่มตารางเรียนประจำสัปดาห์ของตนเองได้ และระบบต้องคำนวณสถานะ `Busy` / `Available` จากตารางเรียนจริง

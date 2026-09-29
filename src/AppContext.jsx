@@ -252,7 +252,11 @@ export function AppProvider({ children }) {
         category: payload.category || "ประกาศ",
         dateStart: payload.dateStart || "",
         dateEnd: payload.dateEnd || "",
-        time: payload.time?.trim() || "",
+        startTime: payload.startTime || "",
+        endTime: payload.endTime || "",
+        time: payload.startTime && payload.endTime
+          ? `${payload.startTime} - ${payload.endTime}`
+          : payload.time?.trim() || "",
         location: payload.location?.trim() || "",
         attendees: payload.attendees?.trim() || "",
         createdAt: new Date().toISOString(),
@@ -312,6 +316,10 @@ export function AppProvider({ children }) {
         description: payload.description?.trim() || "",
         attendeeMode: payload.attendeeMode === "students" ? "students" : "all",
         studentIds: Array.isArray(payload.studentIds) ? [...payload.studentIds] : [],
+        attendeeStudentIds: Array.isArray(payload.attendeeStudentIds)
+          ? [...payload.attendeeStudentIds]
+          : Array.isArray(payload.studentIds) ? [...payload.studentIds] : [],
+        overrideReason: payload.overrideReason?.trim() || "",
         createdAt: new Date().toISOString(),
       };
       return { ...prev, meetings: [...prev.meetings, next] };
@@ -333,12 +341,20 @@ export function AppProvider({ children }) {
           ? {
               ...m,
               date: payload.date || m.date,
-              time: payload.time?.trim() ?? m.time,
+              startTime: payload.startTime ?? m.startTime ?? "",
+              endTime: payload.endTime ?? m.endTime ?? "",
+              time: payload.startTime && payload.endTime
+                ? `${payload.startTime} - ${payload.endTime}`
+                : payload.time?.trim() ?? m.time,
               title: payload.title?.trim() || m.title,
               location: payload.location?.trim() ?? m.location,
               description: payload.description?.trim() ?? m.description,
               attendeeMode: payload.attendeeMode === "students" ? "students" : "all",
               studentIds: Array.isArray(payload.studentIds) ? [...payload.studentIds] : m.studentIds,
+              attendeeStudentIds: Array.isArray(payload.attendeeStudentIds)
+                ? [...payload.attendeeStudentIds]
+                : m.attendeeStudentIds,
+              overrideReason: payload.overrideReason?.trim() ?? m.overrideReason ?? "",
               updatedAt: new Date().toISOString(),
             }
           : m

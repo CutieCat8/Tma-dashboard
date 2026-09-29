@@ -6,6 +6,7 @@ import {
 import { useApp } from "../AppContext";
 import { useTeacher } from "../context/TeacherContext";
 import MeetingComposer, { EMPTY_MEETING } from "../components/MeetingComposer";
+import { parseLegacyMeetingTime } from "../lib/schedule/meeting-time";
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTHS_EN = [
@@ -47,8 +48,8 @@ function generateDays(year, month) {
 }
 
 export default function TeacherSchedulePage() {
-  const { data, addMeeting, removeMeeting, updateMeeting, getMeetingsForDate } = useApp();
-  const { students } = useTeacher();
+  const { data, addMeeting, removeMeeting, updateMeeting, getClassAvailability, getCourseById, setCourseVerification } = useApp();
+  const { students, teacher } = useTeacher();
 
   const tStr = todayISO();
   const tNow = new Date();
@@ -60,6 +61,7 @@ export default function TeacherSchedulePage() {
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [availabilityDetail, setAvailabilityDetail] = useState(null);
 
   const days = generateDays(calMonth.year, calMonth.month);
 
@@ -73,6 +75,15 @@ export default function TeacherSchedulePage() {
   }, [data.meetings]);
 
   const meetingsOnPicked = picked ? meetingsByDate[picked] || [] : [];
+
+  const attendeeIds = useMemo(
+    () => form.attendeeMode === "all" ? students.map((student) => student.id) : form.studentIds,
+    [form.attendeeMode, form.studentIds, students]
+  );
+  const availability = useMemo(
+    () => getClassAvailability(attendeeIds, form.date, form.startTime, form.endTime, { excludeMeetingId: editingId || undefined }),
+    [attendeeIds, editingId, form.date, form.endTime, form.startTime, getClassAvailability]
+  );
 
   const upcoming = useMemo(() => {
     return [...data.meetings]
@@ -104,11 +115,15 @@ export default function TeacherSchedulePage() {
   };
 
   const onEditMeeting = (m) => {
+    const resolvedTime = m.startTime && m.endTime
+      ? { startTime: m.startTime, endTime: m.endTime }
+      : parseLegacyMeetingTime(m.time || "") || { startTime: "", endTime: "" };
     const next = {
       title: m.title || "",
       description: m.description || "",
       date: m.date || "",
       time: m.time || "",
+      ...resolvedTime,
       location: m.location || "",
       attendeeMode: m.attendeeMode === "students" ? "students" : "all",
       studentIds: Array.isArray(m.studentIds) ? [...m.studentIds] : [],
@@ -126,18 +141,29 @@ export default function TeacherSchedulePage() {
   const onSubmit = () => {
     if (!form.title.trim()) return setError("กรุณาใส่หัวข้อนัดหมาย");
     if (!form.date) return setError("กรุณาเลือกวันที่");
+    if (!form.startTime || !form.endTime || form.endTime <= form.startTime) {
+      return setError("กรุณาระบุเวลาเริ่มและเวลาสิ้นสุดให้ถูกต้อง");
+    }
     if (form.attendeeMode === "students" && form.studentIds.length === 0) {
       return setError("กรุณาเลือกนักเรียนอย่างน้อย 1 คน หรือเปลี่ยนเป็นทั้งห้อง");
     }
+    const currentAvailability = getClassAvailability(attendeeIds, form.date, form.startTime, form.endTime, { excludeMeetingId: editingId || undefined });
+    const busyCount = currentAvailability.filter((item) => item.status === "busy").length;
+    let overrideReason = "";
+    if (busyCount > 0) {
+      overrideReason = window.prompt(`มีนักเรียน ${busyCount} คนไม่ว่าง หากต้องการนัดทับ กรุณาระบุเหตุผล`) || "";
+      if (!overrideReason.trim()) return setError("ยกเลิกการสร้างนัด: ต้องระบุเหตุผลเมื่อนัดทับเวลาที่ไม่ว่าง");
+    }
+    const payload = { ...form, attendeeStudentIds: attendeeIds, overrideReason };
     if (editingId) {
-      updateMeeting(editingId, form);
+      updateMeeting(editingId, payload);
       setPicked(form.date);
       setEditingId(null);
       setOriginalForm(null);
       setForm({ ...EMPTY_MEETING, date: form.date });
       setFlash("บันทึกการแก้ไขนัดหมายเรียบร้อย");
     } else {
-      addMeeting(form);
+      addMeeting(payload);
       setPicked(form.date);
       setForm({ ...EMPTY_MEETING, date: form.date });
       setFlash("สร้างนัดหมายเรียบร้อย");
@@ -239,6 +265,8 @@ export default function TeacherSchedulePage() {
               flash={flash}
               isEditing={!!editingId}
               onCancelEdit={onCancelEdit}
+              availability={availability}
+              onAvailabilityClick={setAvailabilityDetail}
             />
           </div>
 
@@ -415,6 +443,40 @@ export default function TeacherSchedulePage() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {availabilityDetail && (
+          <div className="t-modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setAvailabilityDetail(null)}>
+            <section className="t-modal availability-detail-modal" role="dialog" aria-modal="true" aria-labelledby="availability-detail-title">
+              <div className="t-modal-head">
+                <div>
+                  <h3 id="availability-detail-title" className="t-card-title">{studentNameById(availabilityDetail.studentId)}</h3>
+                  <p className="t-card-sub">{availabilityDetail.status === "busy" ? "ไม่ว่างในช่วงเวลานี้" : "ว่างในช่วงเวลานี้"}</p>
+                </div>
+                <button type="button" className="t-btn-ghost" onClick={() => setAvailabilityDetail(null)}>ปิด</button>
+              </div>
+              <div className="availability-conflict-list">
+                {availabilityDetail.conflicts.length === 0 ? <p className="meet-empty">ไม่พบรายการที่ชนกัน</p> : availabilityDetail.conflicts.map((conflict, index) => {
+                  const course = conflict.type === "course" ? getCourseById(conflict.occurrence.courseId) : null;
+                  return (
+                    <article className="availability-conflict-card" key={`${conflict.type}-${index}`}>
+                      <span>{conflict.type === "course" ? "COURSE" : "MEETING"}</span>
+                      <h4>{conflict.type === "course" ? `${conflict.occurrence.courseCode} · ${conflict.occurrence.courseName}` : conflict.meeting.title}</h4>
+                      <p>{conflict.startTime} - {conflict.endTime}{conflict.type === "course" && conflict.occurrence.location ? ` · ${conflict.occurrence.location}` : ""}</p>
+                      {course && <>
+                        <p className={`verification-status is-${course.verificationStatus}`}>{course.verificationStatus === "verified" ? "Verified" : course.verificationStatus === "needs-review" ? "Needs review" : "Self-reported"}</p>
+                        {course.notes && <p>{course.notes}</p>}
+                        <div className="availability-verify-actions">
+                          <button type="button" onClick={() => setCourseVerification(course.id, "verified", { source: "manual-review", actorId: teacher?.name || "teacher", note: "Reviewed from meeting availability" })}>Mark verified</button>
+                          <button type="button" onClick={() => setCourseVerification(course.id, "needs-review", { actorId: teacher?.name || "teacher", note: "Flagged from meeting availability" })}>Needs review</button>
+                        </div>
+                      </>}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
           </div>
         )}
       </main>

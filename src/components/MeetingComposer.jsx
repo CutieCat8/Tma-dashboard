@@ -8,6 +8,8 @@ export const EMPTY_MEETING = {
   description: "",
   date: "",
   time: "",
+  startTime: "09:00",
+  endTime: "10:00",
   location: "",
   attendeeMode: "all",
   studentIds: [],
@@ -23,6 +25,8 @@ export default function MeetingComposer({
   flash,
   isEditing = false,
   onCancelEdit,
+  availability = [],
+  onAvailabilityClick,
 }) {
   const [search, setSearch] = useState("");
 
@@ -108,15 +112,12 @@ export default function MeetingComposer({
             />
           </div>
           <div className="ann-form-row">
-            <label htmlFor="meet-time" className="ann-label">เวลา</label>
-            <input
-              id="meet-time"
-              type="text"
-              className="t-input"
-              placeholder="เช่น 13:00 - 14:00 น."
-              value={form.time}
-              onChange={(e) => update("time", e.target.value)}
-            />
+            <label className="ann-label">เวลา <span className="ann-required">*</span></label>
+            <div className="meet-time-range">
+              <input aria-label="เวลาเริ่ม" type="time" className="t-input" value={form.startTime || ""} onChange={(e) => update("startTime", e.target.value)} />
+              <span>ถึง</span>
+              <input aria-label="เวลาสิ้นสุด" type="time" className="t-input" value={form.endTime || ""} onChange={(e) => update("endTime", e.target.value)} />
+            </div>
           </div>
         </div>
 
@@ -208,6 +209,26 @@ export default function MeetingComposer({
                   );
                 })
               )}
+            </div>
+          </div>
+        )}
+
+        {availability.length > 0 && (
+          <div className="meet-availability" aria-live="polite">
+            <div className="meet-availability-head">
+              <span className="ann-label">สถานะเวลาของผู้เข้าร่วม</span>
+              <span>{availability.filter((item) => item.status === "busy").length} ไม่ว่าง · {availability.filter((item) => item.status === "available").length} ว่าง</span>
+            </div>
+            <div className="meet-availability-list">
+              {availability.map((item) => {
+                const student = students.find((entry) => entry.id === item.studentId);
+                return (
+                  <button key={item.studentId} type="button" className={`meet-availability-row is-${item.status}`} onClick={() => onAvailabilityClick?.(item)}>
+                    <span>{student?.name || item.studentId}</span>
+                    <strong>{item.status === "busy" ? `Busy (${item.conflicts.length})` : item.status === "available" ? "Available" : "Unknown"}</strong>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

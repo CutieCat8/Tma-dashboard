@@ -8,6 +8,10 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
+  BookOpen,
+  Plus,
+  Pencil,
+  Trash2,
   Search,
   UserRound,
   X,
@@ -17,7 +21,6 @@ import { DropdownRangeDatePicker } from "@/components/ui/dropdown-range-date-pic
 
 const DAY_START = 8;
 const DAY_END = 18;
-const HOURS = Array.from({ length: DAY_END - DAY_START + 1 }, (_, index) => DAY_START + index);
 const EVENT_COLORS = ["rose", "amber", "blue", "violet", "sage"];
 
 function toISO(date) {
@@ -54,18 +57,20 @@ function parseMeetingTime(value = "") {
   return { start, end: Math.max(end, start + 0.75) };
 }
 
-function eventPosition(time) {
-  const { start, end } = parseMeetingTime(time);
-  const span = DAY_END - DAY_START;
-  const clampedStart = Math.max(DAY_START, Math.min(start, DAY_END - 0.75));
-  const clampedEnd = Math.max(clampedStart + 0.75, Math.min(end, DAY_END));
+function eventPosition(item, dayStart = DAY_START, dayEnd = DAY_END) {
+  const { start, end } = item.startTime && item.endTime
+    ? { start: Number(item.startTime.slice(0, 2)) + Number(item.startTime.slice(3)) / 60, end: Number(item.endTime.slice(0, 2)) + Number(item.endTime.slice(3)) / 60 }
+    : parseMeetingTime(item.time);
+  const span = dayEnd - dayStart;
+  const clampedStart = Math.max(dayStart, Math.min(start, dayEnd - 0.75));
+  const clampedEnd = Math.max(clampedStart + 0.75, Math.min(end, dayEnd));
   return {
-    "--event-start": `${((clampedStart - DAY_START) / span) * 100}%`,
+    "--event-start": `${((clampedStart - dayStart) / span) * 100}%`,
     "--event-width": `${((clampedEnd - clampedStart) / span) * 100}%`,
   };
 }
 
-function buildVisibleDays(activeDate, view, meetings, selectedRange) {
+function buildVisibleDays(activeDate, view, selectedRange) {
   if (selectedRange?.from) {
     const start = toISO(selectedRange.from);
     const end = toISO(selectedRange.to || selectedRange.from);
@@ -88,37 +93,30 @@ function buildVisibleDays(activeDate, view, meetings, selectedRange) {
   }
 
   const active = fromISO(activeDate);
-  const dates = [...new Set(
-    meetings
-      .filter((meeting) => {
-        const date = fromISO(meeting.date);
-        return date.getFullYear() === active.getFullYear() && date.getMonth() === active.getMonth();
-      })
-      .map((meeting) => meeting.date)
-  )].sort();
-
-  return dates.length > 0 ? dates : [toISO(new Date(active.getFullYear(), active.getMonth(), 1))];
+  const lastDay = new Date(active.getFullYear(), active.getMonth() + 1, 0).getDate();
+  return Array.from({ length: lastDay }, (_, index) => toISO(new Date(active.getFullYear(), active.getMonth(), index + 1)));
 }
 
 export default function StudentSchedulePage() {
-  const { studentId, getMeetingsForStudent } = useApp();
+  const { studentId, getMeetingsForStudent, getCourseOccurrencesForStudent, getCourseById, removeCourse } = useApp();
   const navigate = useNavigate();
   const [view, setView] = useState("day");
   const [selectedDate, setSelectedDate] = useState(null);
   const [search, setSearch] = useState("");
   const [scope, setScope] = useState("all");
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedRange, setSelectedRange] = useState(undefined);
 
   useEffect(() => {
-    if (!selectedMeeting) return undefined;
+    if (!selectedMeeting && !selectedCourse) return undefined;
 
     const closeOnEscape = (event) => {
-      if (event.key === "Escape") setSelectedMeeting(null);
+      if (event.key === "Escape") { setSelectedMeeting(null); setSelectedCourse(null); }
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [selectedMeeting]);
+  }, [selectedMeeting, selectedCourse]);
 
   const meetings = useMemo(
     () => getMeetingsForStudent(studentId),
@@ -136,9 +134,9 @@ export default function StudentSchedulePage() {
   const searchedMeetings = useMemo(() => {
     const query = search.trim().toLowerCase();
     return meetings.filter((meeting) => {
-      const matchesScope = scope === "all" || (
+      const matchesScope = scope !== "course" && (scope === "all" || (
         scope === "private" ? meeting.attendeeMode !== "all" : meeting.attendeeMode === "all"
-      );
+      ));
       const matchesSearch = !query || [meeting.title, meeting.location, meeting.description]
         .some((value) => (value || "").toLowerCase().includes(query));
       return matchesScope && matchesSearch;
@@ -146,9 +144,17 @@ export default function StudentSchedulePage() {
   }, [meetings, scope, search]);
 
   const visibleDays = useMemo(
-    () => buildVisibleDays(activeDate, view, searchedMeetings, selectedRange),
-    [activeDate, view, searchedMeetings, selectedRange]
+    () => buildVisibleDays(activeDate, view, selectedRange),
+    [activeDate, view, selectedRange]
   );
+
+  const courseOccurrences = useMemo(() => {
+    if (!visibleDays.length) return [];
+    const query = search.trim().toLowerCase();
+    return getCourseOccurrencesForStudent(studentId, visibleDays[0], visibleDays.at(-1)).filter((occurrence) => (
+      (scope === "all" || scope === "course") && (!query || [occurrence.courseCode, occurrence.courseName, occurrence.location].some((value) => (value || "").toLowerCase().includes(query)))
+    ));
+  }, [getCourseOccurrencesForStudent, scope, search, studentId, visibleDays]);
 
   const pickerRange = useMemo(
     () => selectedRange || { from: fromISO(activeDate), to: fromISO(activeDate) },
@@ -157,10 +163,26 @@ export default function StudentSchedulePage() {
 
   const rows = useMemo(() => visibleDays.map((date) => ({
     date,
-    items: searchedMeetings
-      .filter((meeting) => meeting.date === date)
-      .sort((a, b) => (a.time || "").localeCompare(b.time || "")),
-  })), [searchedMeetings, visibleDays]);
+    items: [
+      ...searchedMeetings.filter((meeting) => meeting.date === date).map((meeting) => ({ ...meeting, kind: "meeting" })),
+      ...courseOccurrences.filter((occurrence) => occurrence.date === date).map((occurrence) => ({ ...occurrence, id: `${occurrence.courseId}-${date}-${occurrence.startTime}`, kind: "course" })),
+    ].sort((a, b) => (a.startTime || a.time || "").localeCompare(b.startTime || b.time || "")),
+  })), [courseOccurrences, searchedMeetings, visibleDays]);
+
+  const timeline = useMemo(() => {
+    const ranges = rows.flatMap((row) => row.items.map((item) => {
+      if (item.startTime && item.endTime) {
+        return {
+          start: Number(item.startTime.slice(0, 2)) + Number(item.startTime.slice(3)) / 60,
+          end: Number(item.endTime.slice(0, 2)) + Number(item.endTime.slice(3)) / 60,
+        };
+      }
+      return parseMeetingTime(item.time);
+    }));
+    const start = Math.max(0, Math.min(DAY_START, ...ranges.map((range) => Math.floor(range.start))));
+    const end = Math.min(24, Math.max(DAY_END, ...ranges.map((range) => Math.ceil(range.end))));
+    return { start, end, hours: Array.from({ length: end - start + 1 }, (_, index) => start + index) };
+  }, [rows]);
 
   const visibleCount = rows.reduce((total, row) => total + row.items.length, 0);
 
@@ -182,7 +204,7 @@ export default function StudentSchedulePage() {
     : formatDate(activeDate, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
   const cycleScope = () => {
-    setScope((current) => current === "all" ? "class" : current === "class" ? "private" : "all");
+    setScope((current) => current === "all" ? "course" : current === "course" ? "class" : current === "class" ? "private" : "all");
   };
 
   return (
@@ -199,6 +221,9 @@ export default function StudentSchedulePage() {
           </div>
 
           <div className="personal-schedule-actions">
+            <button type="button" className="personal-add-course-btn" onClick={() => navigate("/student/schedule/add-course")}>
+              <Plus size={17} /> Add course
+            </button>
             <label className="personal-schedule-search">
               <Search size={17} />
               <input
@@ -229,7 +254,7 @@ export default function StudentSchedulePage() {
               </div>
               <div className="personal-date-copy">
                 <h2>{dateHeading}</h2>
-                <span>{visibleCount} {visibleCount === 1 ? "appointment" : "appointments"}</span>
+                <span>{visibleCount} {visibleCount === 1 ? "event" : "events"}</span>
               </div>
             </div>
 
@@ -251,7 +276,7 @@ export default function StudentSchedulePage() {
               </div>
 
               <button type="button" className="personal-filter-btn" onClick={cycleScope}>
-                {scope === "all" ? "All meetings" : scope === "class" ? "Class" : "1:1"}
+                {scope === "all" ? "All events" : scope === "course" ? "Courses" : scope === "class" ? "Class meetings" : "1:1 meetings"}
                 <ChevronDown size={15} />
               </button>
 
@@ -277,7 +302,7 @@ export default function StudentSchedulePage() {
             <div className="personal-timeline">
               <div className="personal-time-corner">Personal calendar</div>
               <div className="personal-time-axis">
-                {HOURS.map((hour) => (
+                {timeline.hours.map((hour) => (
                   <span key={hour}>{hour === 12 ? "Noon" : hour > 12 ? `${hour - 12} pm` : `${hour} am`}</span>
                 ))}
               </div>
@@ -297,30 +322,30 @@ export default function StudentSchedulePage() {
                     style={{ "--event-rows": Math.max(row.items.length, 1) }}
                   >
                     <div className="personal-grid-lines" aria-hidden="true">
-                      {HOURS.map((hour) => <i key={hour} />)}
+                      {timeline.hours.map((hour) => <i key={hour} />)}
                     </div>
 
                     {row.items.length === 0 ? (
                       <div className="personal-empty-slot">
                         <Clock3 size={16} /> No appointments scheduled
                       </div>
-                    ) : row.items.map((meeting, index) => (
+                    ) : row.items.map((item, index) => (
                       <button
                         type="button"
-                        key={meeting.id}
-                        className={`personal-event color-${EVENT_COLORS[index % EVENT_COLORS.length]}`}
-                        style={{ ...eventPosition(meeting.time), "--event-row": index }}
-                        title={`${meeting.title}${meeting.time ? ` · ${meeting.time}` : ""}`}
+                        key={item.id}
+                        className={`personal-event ${item.kind === "course" ? "is-course" : `color-${EVENT_COLORS[index % EVENT_COLORS.length]}`}`}
+                        style={{ ...eventPosition(item, timeline.start, timeline.end), "--event-row": index, ...(item.kind === "course" ? { "--course-color": item.color } : {}) }}
+                        title={item.kind === "course" ? `${item.courseCode} · ${item.courseName}` : `${item.title}${item.time ? ` · ${item.time}` : ""}`}
                         aria-haspopup="dialog"
-                        onClick={() => setSelectedMeeting(meeting)}
+                        onClick={() => item.kind === "course" ? setSelectedCourse({ ...getCourseById(item.courseId), occurrence: item }) : setSelectedMeeting(item)}
                       >
                         <div className="personal-event-main">
-                          <strong>{meeting.title}</strong>
-                          {meeting.time && <span>{meeting.time}</span>}
+                          <strong>{item.kind === "course" ? `${item.courseCode} · ${item.courseName}` : item.title}</strong>
+                          <span>{item.kind === "course" ? `${item.startTime} - ${item.endTime}` : item.time}</span>
                         </div>
                         <div className="personal-event-tags">
-                          {meeting.location && <span className="location-tag"><MapPin size={12} />{meeting.location}</span>}
-                          <span className="type-tag"><UserRound size={12} />{meeting.attendeeMode === "all" ? "Class" : "1:1"}</span>
+                          {item.location && <span className="location-tag"><MapPin size={12} />{item.location}</span>}
+                          <span className="type-tag">{item.kind === "course" ? <><BookOpen size={12} />Course</> : <><UserRound size={12} />{item.attendeeMode === "all" ? "Class" : "1:1"}</>}</span>
                         </div>
                         <ChevronRight className="personal-event-open" size={15} aria-hidden="true" />
                       </button>
@@ -388,6 +413,33 @@ export default function StudentSchedulePage() {
 
               <footer className="schedule-event-dialog-footer">
                 <button type="button" onClick={() => setSelectedMeeting(null)}>Close</button>
+              </footer>
+            </section>
+          </div>
+        )}
+
+        {selectedCourse && (
+          <div className="schedule-event-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setSelectedCourse(null)}>
+            <section className="schedule-event-dialog course-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="course-detail-title">
+              <header className="schedule-event-dialog-head">
+                <div><span>Course details</span><h2 id="course-detail-title">{selectedCourse.courseCode} · {selectedCourse.courseName}</h2></div>
+                <button type="button" onClick={() => setSelectedCourse(null)} aria-label="Close course details"><X size={18} /></button>
+              </header>
+              <div className="schedule-event-dialog-body">
+                <div className="schedule-event-detail"><CalendarDays size={18} /><div><span>Date</span><strong>{formatDate(selectedCourse.occurrence.date, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</strong></div></div>
+                <div className="schedule-event-detail"><Clock3 size={18} /><div><span>Time</span><strong>{selectedCourse.occurrence.startTime} - {selectedCourse.occurrence.endTime}</strong></div></div>
+                <div className="schedule-event-detail"><MapPin size={18} /><div><span>Location</span><strong>{selectedCourse.occurrence.location || "Location not specified"}</strong></div></div>
+                <div className="schedule-event-detail"><BookOpen size={18} /><div><span>Term</span><strong>{selectedCourse.termStart} to {selectedCourse.termEnd}</strong></div></div>
+                <div className={`course-verification-pill is-${selectedCourse.verificationStatus}`}>{selectedCourse.verificationStatus === "verified" ? "Verified by teacher" : selectedCourse.verificationStatus === "needs-review" ? "Needs review" : "Self-reported course"}</div>
+                {selectedCourse.privateNote && <div className="schedule-event-description"><span>Private note</span><p>{selectedCourse.privateNote}</p></div>}
+              </div>
+              <footer className="schedule-event-dialog-footer course-detail-actions">
+                <button type="button" className="course-delete-action" onClick={() => {
+                  if (!window.confirm(`Delete ${selectedCourse.courseCode}?`)) return;
+                  const result = removeCourse(selectedCourse.id);
+                  if (result.ok) setSelectedCourse(null);
+                }}><Trash2 size={16} /> Delete</button>
+                <button type="button" onClick={() => navigate(`/student/schedule/courses/${selectedCourse.id}/edit`)}><Pencil size={16} /> Edit course</button>
               </footer>
             </section>
           </div>

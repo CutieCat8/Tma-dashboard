@@ -13,6 +13,7 @@ import TeacherAnnouncementsPage from "./pages/TeacherAnnouncementsPage";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage";
 import StudentAnnouncementsPage from "./pages/StudentAnnouncementsPage";
 import StudentSchedulePage from "./pages/StudentSchedulePage";
+import StudentCourseFormPage from "./pages/StudentCourseFormPage";
 import TeacherRosterPage from "./pages/TeacherRosterPage";
 
 function StudentShell() {
@@ -59,6 +60,8 @@ export default function App() {
           <Route path="analytics" element={<ConsistencyPage />} />
           <Route path="announcements" element={<StudentAnnouncementsPage />} />
           <Route path="schedule" element={<StudentSchedulePage />} />
+          <Route path="schedule/add-course" element={<StudentCourseFormPage />} />
+          <Route path="schedule/courses/:courseId/edit" element={<StudentCourseFormPage />} />
         </Route>
 
         <Route path="/teacher" element={<TeacherShell />}>
