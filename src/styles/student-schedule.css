@@ -1103,3 +1103,256 @@
   }
 }
 
+/* Month view: calendar grid + selected-day panel */
+.month-cal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  border-top: 1px solid #edf0f2;
+}
+
+.month-cal-board {
+  min-width: 0;
+  padding: 12px;
+  border-right: 1px solid #edf0f2;
+}
+
+.month-cal-weekdays,
+.month-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.month-cal-weekdays span {
+  padding: 10px 0;
+  color: #334354;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.month-cal-grid {
+  border-top: 1px solid #e6eaee;
+  border-left: 1px solid #e6eaee;
+}
+
+.month-cal-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 124px;
+  padding: 8px 6px 6px;
+  border-right: 1px solid #e6eaee;
+  border-bottom: 1px solid #e6eaee;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.month-cal-cell:hover {
+  background: #fafbfc;
+}
+
+.month-cal-cell:focus-visible {
+  box-shadow: inset 0 0 0 2px #9db8b3;
+}
+
+.month-cal-cell.is-outside {
+  background: #f6f8f9;
+}
+
+.month-cal-cell.is-outside .month-cal-day {
+  color: #a3adb8;
+}
+
+.month-cal-cell.is-selected {
+  z-index: 1;
+  background: #fffdf6;
+  box-shadow: inset 0 0 0 2px #f2b544;
+}
+
+.month-cal-cell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+  padding: 0 4px 6px;
+}
+
+.month-cal-day {
+  min-width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #334354;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.month-cal-cell.is-today .month-cal-day {
+  background: #173f3a;
+  color: #fff;
+}
+
+.month-cal-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f2b544;
+}
+
+.month-cal-chips {
+  display: grid;
+  gap: 4px;
+}
+
+.month-cal-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px 4px 8px;
+  border: 0;
+  border-left: 3px solid var(--chip-color, #2563eb);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--chip-color, #2563eb) 15%, white);
+  color: #1f2a37;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.month-cal-chip:hover {
+  background: color-mix(in srgb, var(--chip-color, #2563eb) 24%, white);
+}
+
+.month-cal-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-cal-chip time {
+  flex: none;
+  color: #5b6877;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.month-cal-more {
+  padding: 0 4px;
+  color: #667281;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.month-cal-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+.month-cal-panel h3 {
+  margin: 0;
+  color: #15202d;
+  font-size: 18px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.month-cal-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #7a8494;
+  font-size: 13px;
+}
+
+.month-cal-events {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.month-cal-events button {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e3e7ea;
+  border-left: 4px solid var(--chip-color, #2563eb);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--chip-color, #2563eb) 8%, white);
+  color: #1f2a37;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.month-cal-events button:hover {
+  background: color-mix(in srgb, var(--chip-color, #2563eb) 14%, white);
+}
+
+.month-cal-events strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.month-cal-events span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #5b6877;
+  font-size: 12px;
+}
+
+.month-cal-open-day {
+  align-self: flex-start;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid #d6dce1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334354;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.month-cal-open-day:hover {
+  background: #f5f7f8;
+  border-color: #c8ced5;
+}
+
+@media (max-width: 1100px) {
+  .month-cal {
+    grid-template-columns: 1fr;
+  }
+
+  .month-cal-board {
+    border-right: 0;
+    border-bottom: 1px solid #edf0f2;
+  }
+}
+
+@media (max-width: 720px) {
+  .month-cal-board {
+    padding: 8px;
+    overflow-x: auto;
+  }
+
+  .month-cal-weekdays,
+  .month-cal-grid {
+    min-width: 560px;
+  }
+}

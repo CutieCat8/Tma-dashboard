@@ -18,6 +18,7 @@ import { useApp } from "@/app/providers/AppContext";
 import { DropdownRangeDatePicker } from "@/components/ui/dropdown-range-date-picker";
 import { CourseDetailDialog, MeetingDetailDialog } from "./components/StudentScheduleDialogs";
 import { IcsImportDialog } from "./components/IcsImportDialog";
+import MonthCalendar from "./components/MonthCalendar";
 import { parseIcs } from "./lib/ics-import";
 import { parseLegacyMeetingTime, timeToMinutes } from "./lib/meeting-time";
 
@@ -110,8 +111,13 @@ function buildVisibleDays(activeDate, view, selectedRange) {
   }
 
   const active = fromISO(activeDate);
-  const lastDay = new Date(active.getFullYear(), active.getMonth() + 1, 0).getDate();
-  return Array.from({ length: lastDay }, (_, index) => toISO(new Date(active.getFullYear(), active.getMonth(), index + 1)));
+  const first = toISO(new Date(active.getFullYear(), active.getMonth(), 1));
+  const last = toISO(new Date(active.getFullYear(), active.getMonth() + 1, 0));
+  const gridStart = addDays(first, fromISO(first).getDay() === 0 ? -6 : 1 - fromISO(first).getDay());
+  const gridEnd = addDays(last, fromISO(last).getDay() === 0 ? 0 : 7 - fromISO(last).getDay());
+  const days = [];
+  for (let cursor = gridStart; cursor <= gridEnd; cursor = addDays(cursor, 1)) days.push(cursor);
+  return days;
 }
 
 export default function StudentSchedulePage() {
@@ -157,7 +163,7 @@ export default function StudentSchedulePage() {
 
     scrollArea.addEventListener("wheel", scrollHorizontally, { passive: false });
     return () => scrollArea.removeEventListener("wheel", scrollHorizontally);
-  }, []);
+  }, [view === "month"]);
 
   const meetings = useMemo(
     () => getMeetingsForStudent(studentId),
@@ -222,7 +228,10 @@ export default function StudentSchedulePage() {
     };
   }, [rows]);
 
-  const visibleCount = rows.reduce((total, row) => total + row.items.length, 0);
+  const visibleCount = rows.reduce(
+    (total, row) => (view === "month" && !row.date.startsWith(activeDate.slice(0, 7)) ? total : total + row.items.length),
+    0
+  );
 
   const moveDate = (direction) => {
     setSelectedRange(undefined);
@@ -428,6 +437,21 @@ export default function StudentSchedulePage() {
             </div>
           </div>
 
+          {view === "month" ? (
+            <MonthCalendar
+              rows={rows}
+              activeDate={activeDate}
+              today={toISO(new Date())}
+              onSelectDate={setSelectedDate}
+              onOpenItem={(item) => item.kind === "course"
+                ? setSelectedCourse({ ...getCourseById(item.courseId), occurrence: item })
+                : setSelectedMeeting(item)}
+              onOpenDay={() => {
+                setSelectedRange(undefined);
+                setView("day");
+              }}
+            />
+          ) : (
           <div
             ref={timelineScrollRef}
             className="personal-timeline-scroll"
@@ -507,6 +531,7 @@ export default function StudentSchedulePage() {
               ))}
             </div>
           </div>
+          )}
         </section>
 
         <MeetingDetailDialog meeting={selectedMeeting} onClose={() => setSelectedMeeting(null)} />
