@@ -16,6 +16,7 @@ import {
 import { useApp } from "@/app/providers/AppContext";
 import { DropdownRangeDatePicker } from "@/components/ui/dropdown-range-date-picker";
 import { CourseDetailDialog, MeetingDetailDialog } from "./components/StudentScheduleDialogs";
+import { parseLegacyMeetingTime, timeToMinutes } from "./lib/meeting-time";
 
 const DAY_START = 7;
 const DAY_END = 20;
@@ -49,11 +50,9 @@ function formatDate(iso, options) {
 }
 
 function parseMeetingTime(value = "") {
-  const times = [...value.matchAll(/(\d{1,2}):(\d{2})/g)].map((match) => (
-    Number(match[1]) + Number(match[2]) / 60
-  ));
-  const start = times[0] ?? 9;
-  const end = times[1] ?? Math.min(start + 1.5, DAY_END);
+  const parsed = parseLegacyMeetingTime(value);
+  const start = parsed ? timeToMinutes(parsed.startTime) / 60 : 9;
+  const end = parsed ? timeToMinutes(parsed.endTime) / 60 : Math.min(start + 1.5, DAY_END);
   return { start, end: Math.max(end, start + 0.75) };
 }
 
@@ -200,7 +199,12 @@ export default function StudentSchedulePage() {
     }));
     const start = Math.max(0, Math.min(DAY_START, ...ranges.map((range) => Math.floor(range.start))));
     const end = Math.min(24, Math.max(DAY_END, ...ranges.map((range) => Math.ceil(range.end))));
-    return { start, end, hours: Array.from({ length: end - start + 1 }, (_, index) => start + index) };
+    return {
+      start,
+      end,
+      segments: end - start,
+      hours: Array.from({ length: end - start + 1 }, (_, index) => start + index),
+    };
   }, [rows]);
 
   const visibleCount = rows.reduce((total, row) => total + row.items.length, 0);
@@ -326,14 +330,20 @@ export default function StudentSchedulePage() {
             <div
               className="personal-timeline"
               style={{
-                "--timeline-hours": timeline.hours.length,
-                "--timeline-min-width": `${ROW_LABEL_WIDTH + timeline.hours.length * HOUR_COLUMN_WIDTH}px`,
+                "--timeline-segments": timeline.segments,
+                "--timeline-min-width": `${ROW_LABEL_WIDTH + timeline.segments * HOUR_COLUMN_WIDTH}px`,
               }}
             >
               <div className="personal-time-corner">Personal calendar</div>
               <div className="personal-time-axis">
-                {timeline.hours.map((hour) => (
-                  <span key={hour}>{hour === 12 ? "Noon" : hour > 12 ? `${hour - 12} pm` : `${hour} am`}</span>
+                {timeline.hours.map((hour, index) => (
+                  <span
+                    key={hour}
+                    className={index === timeline.hours.length - 1 ? "is-last" : undefined}
+                    style={{ "--hour-position": `${(index / timeline.segments) * 100}%` }}
+                  >
+                    {hour === 12 ? "Noon" : hour > 12 ? `${hour - 12} pm` : `${hour} am`}
+                  </span>
                 ))}
               </div>
 
@@ -352,7 +362,7 @@ export default function StudentSchedulePage() {
                     style={{ "--event-rows": Math.max(row.items.length, 1) }}
                   >
                     <div className="personal-grid-lines" aria-hidden="true">
-                      {timeline.hours.map((hour) => <i key={hour} />)}
+                      {timeline.hours.slice(0, -1).map((hour) => <i key={hour} />)}
                     </div>
 
                     {row.items.length === 0 ? (

@@ -529,16 +529,23 @@
 }
 
 .personal-time-axis {
-  display: grid;
-  grid-template-columns: repeat(var(--timeline-hours), minmax(74px, 1fr));
-  align-items: end;
+  position: relative;
 }
 
 .personal-time-axis span {
-  padding: 0 0 15px 8px;
+  position: absolute;
+  bottom: 15px;
+  left: var(--hour-position);
+  padding-left: 8px;
   color: #697687;
   font-size: 11px;
   white-space: nowrap;
+}
+
+.personal-time-axis span.is-last {
+  padding-right: 8px;
+  padding-left: 0;
+  transform: translateX(-100%);
 }
 
 .personal-row-label {
@@ -581,7 +588,7 @@
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(var(--timeline-hours), 1fr);
+  grid-template-columns: repeat(var(--timeline-segments), 1fr);
   pointer-events: none;
 }
 
@@ -598,7 +605,7 @@
   z-index: 1;
   top: calc(10px + var(--event-row) * 82px);
   left: var(--event-start);
-  width: max(var(--event-width), 175px);
+  width: var(--event-width);
   height: 68px;
   overflow: hidden;
   display: flex;
@@ -696,6 +703,12 @@
 
   .personal-event {
     gap: 6px;
+  }
+}
+
+@container (max-width: 120px) {
+  .personal-event-open {
+    display: none;
   }
 }
 

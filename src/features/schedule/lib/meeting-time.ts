@@ -28,13 +28,13 @@ export function isOnGranularity(time: string, granularity: number = MINUTE_GRANU
   return timeToMinutes(time) % granularity === 0;
 }
 
-// Legacy meetings stored a free-text time such as "09:00 - 12:00 น." or
-// "9:00-12:00". Returns null (never a guessed range) when the string can't
+// Legacy meetings stored a free-text time such as "09:00 - 12:00 น.",
+// "9:00-12:00", or "13.00 - 14.00". Returns null when the string can't
 // be parsed with confidence — callers must show "Availability unknown" and
 // require the user to fix the time rather than assuming Available.
 export function parseLegacyMeetingTime(time: string): { startTime: string; endTime: string } | null {
   if (typeof time !== "string") return null;
-  const match = time.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+  const match = time.match(/(\d{1,2})[:.](\d{2})\s*-\s*(\d{1,2})[:.](\d{2})/);
   if (!match) return null;
   const [, sh, sm, eh, em] = match;
   const startTime = `${sh.padStart(2, "0")}:${sm}`;
