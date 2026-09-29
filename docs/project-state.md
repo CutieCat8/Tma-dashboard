@@ -42,6 +42,17 @@ Implemented scheduling workflow:
 - Teachers can mark schedule verification status and override a Busy warning only with
   an explicit reason; audit entries are retained in prototype data.
 
+Programme structure (the dashboard is built for this programme first): Pre-school
+(Apr–May 2025), Y1 Sem 1 (Jun–Oct 2025), Y1 Sem 2 (Nov 2025–Mar 2026), Summer 1
+(Apr–May 2026), Y2 Sem 1 (Jun–Sep 2026), Y2 Sem 2 (Oct–Nov 2026, last study term), then
+a 16-month internship. Term dates live in `src/features/schedule/lib/academic-terms.ts`.
+
+- `/student/schedule/courses` (My courses) lists registered courses grouped by term on a
+  programme timeline; courses are assigned to the term they overlap most.
+- Students can import courses from an `.ics` file (weekly rules and hand-added single
+  days); re-importing replaces saved self-reported courses of the same code/name.
+- Month view in Student Schedule is a calendar grid with a selected-day panel.
+
 The frontend was restructured into feature-first folders:
 
 - `src/app` — application routing, initial data, and providers

@@ -22,16 +22,22 @@ const EMPTY_FORM = {
 export default function StudentCourseFormPage() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const returnTo = useLocation().state?.from || "/student/schedule";
+  const routeState = useLocation().state;
+  const returnTo = routeState?.from || "/student/schedule";
+  const termDefaults = routeState?.term;
   const { studentId, addCourse, updateCourse, getCourseById } = useApp();
   const existing = useMemo(() => courseId ? getCourseById(courseId) : null, [courseId, getCourseById]);
-  const [form, setForm] = useState(() => existing ? { ...EMPTY_FORM, ...existing, sessions: existing.sessions.map((session) => ({ ...session })) } : EMPTY_FORM);
+  const newCourseForm = useMemo(
+    () => ({ ...EMPTY_FORM, termStart: termDefaults?.start ?? "", termEnd: termDefaults?.end ?? "" }),
+    [termDefaults]
+  );
+  const [form, setForm] = useState(() => existing ? { ...EMPTY_FORM, ...existing, sessions: existing.sessions.map((session) => ({ ...session })) } : newCourseForm);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
   const initialSnapshot = useMemo(
-    () => JSON.stringify(existing ? { ...EMPTY_FORM, ...existing, sessions: existing.sessions } : EMPTY_FORM),
-    [existing]
+    () => JSON.stringify(existing ? { ...EMPTY_FORM, ...existing, sessions: existing.sessions } : newCourseForm),
+    [existing, newCourseForm]
   );
   const dirty = JSON.stringify(form) !== initialSnapshot;
 

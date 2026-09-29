@@ -9,7 +9,6 @@ import {
   Clock3,
   MapPin,
   BookOpen,
-  Plus,
   Search,
   UserRound,
   X,
@@ -331,9 +330,6 @@ export default function StudentSchedulePage() {
           </div>
 
           <div className="personal-schedule-actions">
-            <button type="button" className="personal-add-course-btn" onClick={() => navigate("/student/schedule/add-course")}>
-              <Plus size={17} /> Add course
-            </button>
             <label className="personal-schedule-search">
               <Search size={17} />
               <input
