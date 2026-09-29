@@ -368,6 +368,15 @@
   cursor: pointer;
 }
 
+.personal-date-nav .personal-today-btn {
+  width: auto;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
 .personal-date-nav button:hover,
 .personal-filter-btn:hover,
 .personal-date-picker:hover {
@@ -459,6 +468,62 @@
   position: relative;
 }
 
+.personal-filter-menu {
+  position: relative;
+}
+
+.personal-filter-btn svg {
+  transition: transform 0.15s ease;
+}
+
+.personal-filter-btn.open {
+  background: #f5f7f8;
+  border-color: #c8ced5;
+}
+
+.personal-filter-btn.open svg {
+  transform: rotate(180deg);
+}
+
+.personal-filter-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  min-width: 100%;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid #d6dce1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(21, 32, 45, 0.12);
+}
+
+.personal-filter-list button {
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #334354;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.personal-filter-list button:hover {
+  background: #f5f7f8;
+}
+
+.personal-filter-list button.active {
+  background: #eaf0ef;
+  color: #173f3a;
+}
+
 .personal-date-picker input {
   position: absolute;
   inset: 0;
@@ -488,6 +553,10 @@
 }
 
 .personal-range-popover {
+  max-width: calc(100vw - 24px);
+  max-height: min(calc(100dvh - 24px), var(--radix-popover-content-available-height));
+  overflow: hidden;
+  overscroll-behavior: contain;
   border-color: #dce2e7;
   border-radius: 14px;
   background: #fff;
@@ -496,9 +565,52 @@
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
 }
 
+.personal-range-content {
+  max-height: calc(min(100dvh, var(--radix-popover-content-available-height)) - 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.personal-range-selectors,
+.personal-range-actions {
+  flex: none;
+}
+
+.personal-range-calendar-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.personal-range-actions {
+  padding-top: 8px;
+  border-top: 1px solid #e8ebee;
+  background: #fff;
+}
+
 .personal-range-popover .rdp {
   margin: 0;
   background: #fff;
+}
+
+.personal-range-popover .rdp-month > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 8px;
+}
+
+.personal-range-popover .rdp-row {
+  margin-top: 4px;
+}
+
+.personal-range-calendar th,
+.personal-range-calendar td,
+.personal-range-calendar td > button {
+  width: 30px;
+}
+
+.personal-range-calendar td,
+.personal-range-calendar td > button {
+  height: 30px;
 }
 
 .personal-timeline-scroll {
@@ -553,10 +665,6 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: calc(100vw - 24px);
-  max-height: min(calc(100dvh - 24px), var(--radix-popover-content-available-height));
-  overflow: hidden;
-  overscroll-behavior: contain;
   padding: 18px 22px;
   border-bottom: 1px solid #edf0f2;
   color: #1d2a36;
@@ -565,54 +673,11 @@
 .personal-row-label .personal-row-day {
   margin-bottom: 3px;
   color: #17645c;
-.personal-range-content {
-  max-height: calc(min(100dvh, var(--radix-popover-content-available-height)) - 24px);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.personal-range-selectors,
-.personal-range-actions {
-  flex: none;
-}
-
-.personal-range-calendar-scroll {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.personal-range-actions {
-  padding-top: 8px;
-  border-top: 1px solid #e8ebee;
-  background: #fff;
-}
-
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.personal-range-popover .rdp-month > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 8px;
-}
-
-.personal-range-popover .rdp-row {
-  margin-top: 4px;
-}
-
-.personal-range-calendar th,
-.personal-range-calendar td,
-.personal-range-calendar td > button {
-  width: 30px;
-}
-
-.personal-range-calendar td,
-.personal-range-calendar td > button {
-  height: 30px;
-}
-
 
 .personal-row-label strong {
   font-size: 15px;
@@ -992,6 +1057,11 @@
 
   .personal-view-switch {
     grid-column: 1 / -1;
+  }
+
+  .personal-filter-list {
+    left: 0;
+    right: auto;
   }
 
   .personal-filter-btn,

@@ -22,7 +22,14 @@ const DAY_START = 7;
 const DAY_END = 20;
 const HOUR_COLUMN_WIDTH = 74;
 const ROW_LABEL_WIDTH = 205;
-const EVENT_COLORS = ["rose", "amber", "blue", "violet", "sage"];
+const MIN_DAY_EVENT_ROWS = 3;
+const SCOPE_OPTIONS = [
+  { value: "all", label: "All events" },
+  { value: "course", label: "Courses" },
+  { value: "class", label: "Class meetings" },
+  { value: "private", label: "1:1 meetings" },
+];
+const EVENT_COLORS =["rose", "amber", "blue", "violet", "sage"];
 
 function toISO(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -56,10 +63,18 @@ function parseMeetingTime(value = "") {
   return { start, end: Math.max(end, start + 0.75) };
 }
 
+function getItemTimeRange(item) {
+  if (item.startTime && item.endTime) {
+    return {
+      start: Number(item.startTime.slice(0, 2)) + Number(item.startTime.slice(3)) / 60,
+      end: Number(item.endTime.slice(0, 2)) + Number(item.endTime.slice(3)) / 60,
+    };
+  }
+  return parseMeetingTime(item.time);
+}
+
 function eventPosition(item, dayStart = DAY_START, dayEnd = DAY_END) {
-  const { start, end } = item.startTime && item.endTime
-    ? { start: Number(item.startTime.slice(0, 2)) + Number(item.startTime.slice(3)) / 60, end: Number(item.endTime.slice(0, 2)) + Number(item.endTime.slice(3)) / 60 }
-    : parseMeetingTime(item.time);
+  const { start, end } = getItemTimeRange(item);
   const span = dayEnd - dayStart;
   const clampedStart = Math.max(dayStart, Math.min(start, dayEnd - 0.75));
   const clampedEnd = Math.max(clampedStart + 0.75, Math.min(end, dayEnd));
@@ -103,6 +118,8 @@ export default function StudentSchedulePage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [search, setSearch] = useState("");
   const [scope, setScope] = useState("all");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterMenuRef = useRef(null);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedRange, setSelectedRange] = useState(undefined);
@@ -184,19 +201,11 @@ export default function StudentSchedulePage() {
     items: [
       ...searchedMeetings.filter((meeting) => meeting.date === date).map((meeting) => ({ ...meeting, kind: "meeting" })),
       ...courseOccurrences.filter((occurrence) => occurrence.date === date).map((occurrence) => ({ ...occurrence, id: `${occurrence.courseId}-${date}-${occurrence.startTime}`, kind: "course" })),
-    ].sort((a, b) => (a.startTime || a.time || "").localeCompare(b.startTime || b.time || "")),
+    ].sort((a, b) => getItemTimeRange(a).start - getItemTimeRange(b).start),
   })), [courseOccurrences, searchedMeetings, visibleDays]);
 
   const timeline = useMemo(() => {
-    const ranges = rows.flatMap((row) => row.items.map((item) => {
-      if (item.startTime && item.endTime) {
-        return {
-          start: Number(item.startTime.slice(0, 2)) + Number(item.startTime.slice(3)) / 60,
-          end: Number(item.endTime.slice(0, 2)) + Number(item.endTime.slice(3)) / 60,
-        };
-      }
-      return parseMeetingTime(item.time);
-    }));
+    const ranges = rows.flatMap((row) => row.items.map(getItemTimeRange));
     const start = Math.max(0, Math.min(DAY_START, ...ranges.map((range) => Math.floor(range.start))));
     const end = Math.min(24, Math.max(DAY_END, ...ranges.map((range) => Math.ceil(range.end))));
     return {
@@ -218,6 +227,11 @@ export default function StudentSchedulePage() {
     setSelectedDate(addDays(activeDate, direction * (view === "week" ? 7 : 1)));
   };
 
+  const goToToday = () => {
+    setSelectedRange(undefined);
+    setSelectedDate(toISO(new Date()));
+  };
+
   const dateHeading = selectedRange?.from
     ? `${formatDate(toISO(selectedRange.from), { month: "short", day: "numeric" })} – ${formatDate(toISO(selectedRange.to || selectedRange.from), { month: "short", day: "numeric", year: "numeric" })}`
     : view === "month"
@@ -226,9 +240,21 @@ export default function StudentSchedulePage() {
     ? `${formatDate(visibleDays[0], { month: "short", day: "numeric" })} – ${formatDate(visibleDays.at(-1), { month: "short", day: "numeric", year: "numeric" })}`
     : formatDate(activeDate, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
-  const cycleScope = () => {
-    setScope((current) => current === "all" ? "course" : current === "course" ? "class" : current === "class" ? "private" : "all");
-  };
+  useEffect(() => {
+    if (!filterOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (!filterMenuRef.current?.contains(event.target)) setFilterOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setFilterOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [filterOpen]);
 
   return (
     <div className="main-wrapper sched-page personal-schedule-page">
@@ -271,6 +297,9 @@ export default function StudentSchedulePage() {
                 <button type="button" onClick={() => moveDate(-1)} aria-label="Previous period">
                   <ChevronLeft size={18} />
                 </button>
+                <button type="button" className="personal-today-btn" onClick={goToToday}>
+                  Today
+                </button>
                 <button type="button" onClick={() => moveDate(1)} aria-label="Next period">
                   <ChevronRight size={18} />
                 </button>
@@ -298,10 +327,36 @@ export default function StudentSchedulePage() {
                 ))}
               </div>
 
-              <button type="button" className="personal-filter-btn" onClick={cycleScope}>
-                {scope === "all" ? "All events" : scope === "course" ? "Courses" : scope === "class" ? "Class meetings" : "1:1 meetings"}
-                <ChevronDown size={15} />
-              </button>
+              <div className="personal-filter-menu" ref={filterMenuRef}>
+                <button
+                  type="button"
+                  className={`personal-filter-btn${filterOpen ? " open" : ""}`}
+                  onClick={() => setFilterOpen((open) => !open)}
+                  aria-haspopup="listbox"
+                  aria-expanded={filterOpen}
+                >
+                  {SCOPE_OPTIONS.find((option) => option.value === scope)?.label}
+                  <ChevronDown size={15} />
+                </button>
+                {filterOpen && (
+                  <ul className="personal-filter-list" role="listbox">
+                    {SCOPE_OPTIONS.map((option) => (
+                      <li key={option.value} role="option" aria-selected={scope === option.value}>
+                        <button
+                          type="button"
+                          className={scope === option.value ? "active" : ""}
+                          onClick={() => {
+                            setScope(option.value);
+                            setFilterOpen(false);
+                          }}
+                        >
+                          {option.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
               <DropdownRangeDatePicker
                 value={pickerRange}
@@ -359,7 +414,12 @@ export default function StudentSchedulePage() {
 
                   <div
                     className={`personal-row-track ${row.items.length ? "has-events" : "is-empty"}`}
-                    style={{ "--event-rows": Math.max(row.items.length, 1) }}
+                    style={{
+                      "--event-rows": Math.max(
+                        row.items.length,
+                        visibleDays.length === 1 ? MIN_DAY_EVENT_ROWS : 1
+                      ),
+                    }}
                   >
                     <div className="personal-grid-lines" aria-hidden="true">
                       {timeline.hours.slice(0, -1).map((hour) => <i key={hour} />)}
